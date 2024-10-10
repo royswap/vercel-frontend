@@ -21,13 +21,13 @@ function Paper_allot_reviewer_report() {
     navigate('/select-conference'); // <-- This will navigate to the select-conference page
   };
 
+  const toSentenceCase = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
-      {/*
-  Heads up! 👋
-
-  This component comes with some `rtl` classes. Please remove them if they are not needed in your project.
-*/}
       {/* Home Icon */}
       <div className="w-full text-left mb-4">
         <img
@@ -53,12 +53,12 @@ function Paper_allot_reviewer_report() {
           <tbody className="divide-y divide-gray-200">
             {data.map((item, index) => (
               <tr >
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.reviewer}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.reviewer)}</td>
 
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.paper_title}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.paper_title)}</td>
 
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.name}</td>
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.co_authors}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.name)}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.co_authors)}</td>
               </tr>
             ))}
           </tbody>

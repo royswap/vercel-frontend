@@ -59,7 +59,7 @@ function ReviewInvitation() {
           onClick={redirectToHome}
         />
       </div>
-      <div className='flex items-center justify-center text-3xl )'>Review Details</div>
+      <div className='flex items-center justify-center text-3xl )'><u>Invite Reviewers to Review Papers</u></div>
       <div className='mt-1 p-4'>
         <form onSubmit={handleSubmit}>
           <div className='m-2'>

@@ -190,17 +190,25 @@ const PaperManagement = () => {
     navigate('/select-conference'); //redirection by home icon 
   };
 
+  const toSentenceCase = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   return (
-    <div className="p-4 mt-6 space-y-4 md:space-y-0 md:grid md:grid-cols-1 md:gap-4 bg-slate-50">
-      {/* Home Icon */}
-      <div className="w-full text-left mb-4">
-        <img
-          src={homeIcon}
-          alt="Home"
-          className="cursor-pointer w-8 h-8"
-          onClick={redirectToHome}
-        />
-      </div>
+    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded overflow-auto bg-slate-50">
+  {/* Home Icon and Title in One Line */}
+  <div className="relative flex items-center">
+    <img
+      src={homeIcon}
+      alt="Home"
+      className="cursor-pointer w-8 h-8 mb-10"
+      onClick={redirectToHome}
+    />
+    <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl mb-10">
+      <u>Allot Papers to Reviewers</u>
+    </div>
+  </div>
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded shadow-lg text-center">
@@ -238,6 +246,7 @@ const PaperManagement = () => {
       )}
       {/* Row 1 */}
       <div className="md:grid md:grid-cols-2 md:gap-4">
+        
         {/* Column 1 */}
         <div className="bg-white p-4 border border-zinc-700 rounded shadow-md">
           <div className='text-xl mb-4 text-center'>Allotment Of Papers</div>
@@ -258,7 +267,7 @@ const PaperManagement = () => {
                   <option selected>Select an option</option>
                   {tracks.map((track) => (
                     <option key={track._id} value={track._id}>
-                      {track.track_name}
+                      {toSentenceCase(track.track_name)}
                     </option>
                   ))}
                 </select>
@@ -280,7 +289,7 @@ const PaperManagement = () => {
                   <option>Select an option</option>
                   {reviewers.map((reviewer) => (
                     <option key={reviewer._id} value={reviewer._id}>
-                      {reviewer.name}
+                      {toSentenceCase(reviewer.name)}
                     </option>
                   ))}
                 </select>
@@ -297,7 +306,7 @@ const PaperManagement = () => {
                   id="paper"
                   name="paper"
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                  value={selectedPaper}
+                  value={toSentenceCase(selectedPaper)}
                   required
                 />
               </label>
@@ -314,7 +323,7 @@ const PaperManagement = () => {
         </div>
 
         {/* Column 2 */}
-        <div className="bg-white p-4 border border-zinc-700 rounded shadow-md">
+        <div className="bg-white p-4 border border-zinc-700 rounded shadow-md cursor-pointer">
           <div className='flex items-center justify-between text-xl mb-4'>
             <div>List Of Papers</div>
             <div className="relative">
@@ -362,8 +371,8 @@ const PaperManagement = () => {
                   <tbody className="divide-y divide-gray-200">
                     {papers.map((item, index) => (
                       <tr key={index} onClick={() => handleRowClick(item._id, item.title)}>
-                        <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.name}</td>
-                        <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.title}</td>
+                        <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.name)}</td>
+                        <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.title)}</td>
 
                       </tr>
                     ))}
@@ -435,7 +444,7 @@ const PaperManagement = () => {
       </div>
 
       {/* New Row 2 */}
-      <div className="bg-white p-4 border border-zinc-700 rounded shadow-md">
+      <div className="bg-white p-4 border border-zinc-700 rounded shadow-md mt-10">
         {/*
       Heads up! 👋
       This component comes with some `rtl` classes. Please remove them if they are not needed in your project.
@@ -454,9 +463,9 @@ const PaperManagement = () => {
             <tbody className="divide-y divide-gray-200">
               {data.map((item, index) => (
                 <tr key={index}>
-                  <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.reviewer}</td>
+                  <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.reviewer)}</td>
 
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.paper}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.paper)}</td>
                   <td className="whitespace-nowrap px-4 py-2">
                     <span className="inline-flex overflow-hidden rounded-md border bg-white shadow-sm">
                       <button

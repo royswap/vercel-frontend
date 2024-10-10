@@ -172,16 +172,23 @@ const ReviewPaper = () => {
 
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 bg-body-tertiary rounded bg-slate-50container mx-auto px-4">
-      <div className="flex justify-between items-center mb-6">
-        {/* Home Icon */}
-        <div>
-          <img
-            src={homeIcon}
-            alt="Home"
-            className="cursor-pointer w-8 h-8"
-            onClick={redirectToHome}
-          />
-        </div>
+      <div className="relative flex justify-between items-center mb-6">
+    {/* Home Icon */}
+    <div className="flex items-center">
+      <img
+        src={homeIcon}
+        alt="Home"
+        className="cursor-pointer w-8 h-8"
+        onClick={redirectToHome}
+      />
+    </div>
+
+    {/* Centered Title */}
+    <div className="absolute left-1/2 transform -translate-x-1/2">
+      <h2 className="text-3xl font-semibold">
+        <u>Paper Review Form</u>
+      </h2>
+    </div>
 
         <button className="inline-block text-end rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
           onClick={fetchPdfOnClick}>
@@ -199,7 +206,6 @@ const ReviewPaper = () => {
       </div>
 
       <div className="bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-blue-600 mb-4">Paper Review Form</h2>
         <form onSubmit={handleFormSubmit}>
           <div className="mb-4">
             <label htmlFor="paperTitle" className="block text-gray-700 font-medium mb-2">Paper Title:</label>

@@ -104,17 +104,25 @@ function TrackRegistration() {
     navigate('/select-conference'); //redirection by home icon 
   };
 
+  const toSentenceCase = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   return (
-    <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
-      {/* Home Icon */}
-      <div className="w-full text-left mb-4">
-        <img
-          src={homeIcon}
-          alt="Home"
-          className="cursor-pointer w-8 h-8"
-          onClick={redirectToHome}
-        />
-      </div>
+    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded overflow-auto bg-slate-50">
+  {/* Home Icon and Title in One Line */}
+  <div className="relative flex items-center">
+    <img
+      src={homeIcon}
+      alt="Home"
+      className="cursor-pointer w-8 h-8"
+      onClick={redirectToHome}
+    />
+    <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
+      <u>Create the Tracks</u>
+    </div>
+  </div>
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded shadow-lg text-center">
@@ -155,7 +163,7 @@ function TrackRegistration() {
         </div>
       )}</div>
       <div className='w-full m-6'>
-        <h2 className='text-2xl text font-semibold text-black'>Conference Name : {conference_name}</h2>
+        <h2 className='text-2xl text font-semibold text-black'>Conference Name : {toSentenceCase(conference_name)}</h2>
       </div>
       <div className='w-full md:flex'>
         {/* for form */}
@@ -170,7 +178,7 @@ function TrackRegistration() {
                 id="search"
                 className="block w-full p-3 ps-10 text-sm text-black border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-white dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500" 
                 placeholder=""
-                value={inputValue}
+                value={toSentenceCase(inputValue)}
                 onChange={handleInputChange}
                 required
               />
@@ -228,7 +236,7 @@ function TrackRegistration() {
                 {tracks.map((track) => (
                   <tr key={track._id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {track.track_name}
+                    {toSentenceCase(track.track_name)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <button

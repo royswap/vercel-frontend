@@ -22,6 +22,11 @@ function Authorwisepapers() {
     navigate('/select-conference'); //redirection by home icon 
   };
 
+  const toSentenceCase = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
       {/*
@@ -58,16 +63,15 @@ function Authorwisepapers() {
           <tbody className="divide-y divide-gray-200">
             {data.map((item, index) => (
               <tr >
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.paper_title}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.paper_title)}</td>
 
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.track_name}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.track_name)}</td>
 
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.
-                  first_author}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.first_author)}</td>
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.first_author_email}</td>
 
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.first_author_country}</td>
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.co_authors}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.first_author_country)}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.co_authors)}</td>
               </tr>
             ))}
           </tbody>

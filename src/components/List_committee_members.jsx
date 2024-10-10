@@ -37,13 +37,13 @@ function List_committee_members() {
     navigate('/select-conference'); // <-- This will navigate to the select-conference page
   };
 
+  const toSentenceCase = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
-      {/*
-      Heads up! 👋
-    
-      This component comes with some `rtl` classes. Please remove them if they are not needed in your project.
-    */}
     {/* Home Icon */}
     <div className="w-full text-left mb-4">
         <img
@@ -68,7 +68,7 @@ function List_committee_members() {
           >
             <option value="" selected>Select an option</option>
             {committees.map((con) => (
-              <option key={con._id} value={con._id}>{con.committee_name}</option>
+              <option key={con._id} value={con._id}>{toSentenceCase(con.committee_name)}</option>
             ))}
           </select>
         </label>
@@ -91,15 +91,15 @@ function List_committee_members() {
           <tbody className="divide-y divide-gray-200">
             {data.map((item, index) => (
               <tr>
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.designation}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.designation)}</td>
 
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.name}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.name)}</td>
 
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.mobile}</td>
 
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.email}</td>
 
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.country}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.country)}</td>
 
 
               </tr>

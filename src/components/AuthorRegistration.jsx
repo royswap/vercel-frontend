@@ -3,6 +3,7 @@ import {
   createAuthorWork,
   fetchauthorwork,
   withdrawPaper,
+  editAuthor
 } from "../services/ConferenceServices";
 import { useLoaderData } from "react-router-dom";
 import { getAllConference } from "../services/ConferenceServices";
@@ -120,12 +121,13 @@ const AuthorRegistration = () => {
       console.log("ddd");
       return;
     }
+
     const coAuthorsData = CoAuthors.map((coAuthor) => ({
       name: coAuthor.name,
       affiliation: coAuthor.affiliation,
       country: coAuthor.country,
       contact_no: coAuthor.mobile,
-      email: coAuthor.email,
+      email: coAuthor .email,
       isCorrespondingAuthor: coAuthor.isCorresponding,
     }));
 
@@ -145,21 +147,22 @@ const AuthorRegistration = () => {
     };
 
     setLoading(true);
-    // createAuthorWork(authorWorkData, selectedTrackId, conference._id, pdfFile)
-    //   .then((Response) => {
-    //     // setCompletionMessage(Response.data.message);
-    //     console.log(Response.data);
-    //     setPaperId(Response.data.paper_id);
-    //     setShowPopup(true);
-    //     clearData();
-    //   })
-    //   .catch((err) => {
-    //     alert(err.response.data.error);
-    //     console.log(err);
-    //   });
-    // setLoading(false);
-    console.log(authorWorkData);
+    createAuthorWork(JSON.stringify(authorWorkData), selectedTrackId, conference._id, pdfFile )
+      .then((Response) => {
+        // setCompletionMessage(Response.data.message);
+        console.log(Response.data);
+        setPaperId(Response.data.paper_id);
+        setShowPopup(true);
+        clearData();
+        seteditPaper(false);
+      })
+      .catch((err) => {
+        alert(err.response.data.error);
+        console.log(err);
+      });
+    setLoading(false);
     
+    console.log(authorWorkData);
   };
 
   const handleAddCoAuthor = () => {
@@ -216,7 +219,17 @@ const AuthorRegistration = () => {
         // setCompletionMessage(Response.data.message);
         console.log(Response.data);
         setPaperDetails(Response.data);
-        seteditPaper(false);
+        setName(Response.data.name);
+        setAffiliation(Response.data.affiliation);
+        setCountry(Response.data.country);
+        setContactNumber(Response.data.contact_no);
+        setEmail(Response.data.email);
+        setGooglescId(Response.data.google_sh_id);
+        setOrchidId(Response.data.orcid_id);
+        setTitle(Response.data.title);
+        setKeywords(Response.data.keywords);
+        setAbstract(Response.data.abstract);
+        seteditPaper(false); // Enable editing
       })
       .catch((err) => {
         console.error("Error fetching paper data:", err);
@@ -230,7 +243,7 @@ const AuthorRegistration = () => {
       return;
     }
     console.log(paperID);
-    
+
     // setLoading(true);
     withdrawPaper(paperID)
       .then(() => {
@@ -248,7 +261,7 @@ const AuthorRegistration = () => {
         // setLoading(false);
         alert("Paper withdrawn successfully.");
       })
-      .catch((error) => {
+      .catch(( error) => {
         console.error("Error withdrawing paper:", error);
         setLoading(false);
         alert("An error occurred while withdrawing the paper.");
@@ -279,10 +292,34 @@ const AuthorRegistration = () => {
       abstract,
       co_authors: coAuthorsData,
     };
-    console.log(authorWorkData);
+
+    console.log("Changed Data:", authorWorkData); // Add this line
+    // console.log("Changed Data:", paperID); // Add this line
+    // console.log("Changed Data:", selectedTrackId); // Add this line
+    // console.log("Changed Data:", conference); // Add this line
+
+    editAuthor(JSON.stringify(authorWorkData), paperID, pdfFile )
+      .then((res) => {
+        alert("Paper details updated successfully.");
+        console.log(res.data);
+        seteditPaper(true); // Disable editing
+      })
+      .catch((err) => {
+        console.error("Error updating paper details:", err);
+        alert("An error occurred while updating paper details.");
+      });
+    // console.log(pdfFile);
     
-    
-  }
+  };
+
+  const handleEditToggle = () => {
+    seteditPaper((prev) => !prev);
+  };
+
+  const toSentenceCase = (text) => {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
 
   return (
     <div className="container mx-auto">
@@ -318,222 +355,222 @@ const AuthorRegistration = () => {
                 </div>
               </div>
             )}
+            <div className="flex items-center justify-center text-4xl mb-4">
+              <u>Submit Paper and Edit</u>
+            </div>
 
-            <h3 className="text-2xl font-semibold text-center mb-4">
-              Submit Paper
-            </h3>
             {/* {completionMessage && (
                 <div className="alert alert-success mb-4">
                   {completionMessage}
                 </div>
               )} */}
 
-            <form onSubmit={handleFormSubmit}>
-              {/*Ppaer ID Search and Go button*/}
-              <label className="block text-gray-700">Paper Id:</label>
-              <div className="flex items-center">
-                <input
-                  type="text"
-                  className="form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300"
-                  value={paperID}
-                  onChange={(e) => setPaperID(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="ml-2 bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={handleGoButtonClick}
-                >
-                  Go
-                </button>
-              </div>
-
-              {/* Conference */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Conference:</label>
-                <select
-                  className={`form-input mt-1 block w-full border border-gray-300 ${
-                    errors.track ? "border-red-500" : ""
-                  }`}
-                  onChange={handleConferenceChange}
-                >
-                  <option value="">
-                    {paperDetails && paperDetails.conference_title
-                      ? paperDetails.conference_title
-                      : "Select Conference"}
-                        
-                  </option>
-                  {conferenceList.map((conferenceItem) => (
-                    <option key={conferenceItem._id} value={conferenceItem._id}>
-                      {conferenceItem.conference_title}
-                    </option>
-                  ))}
-                </select>
-                {errors.track && (
-                  <p className="text-red-500 text-xs italic">{errors.track}</p>
-                )}
-              </div>
-
-              {/* Name */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Name:</label>
+            {paperDetails && !editPaper ? (
+              <form onSubmit={handleFormEdit}>
+                {/*Ppaer ID Search and Go button*/}
+                <label className="block text-gray-700">Paper Id:</label>
                 <div className="flex items-center">
                   <input
                     type="text"
-                    className={`form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300 ${
-                      errors.name ? "border-red-500" : ""
-                    }`}
-                    value={paperDetails.name || name}
-                    onChange={(e) => setName(e.target.value)}
+                    className="form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300"
+                    value={paperID}
+                    onChange={(e) => setPaperID(e.target.value)}
                   />
-                  <label className="ml-2">
-                    <input
-                      type="checkbox"
-                      className="form-checkbox"
-                      checked={isCorrespondingAuthor}
-                      onChange={(e) =>
-                        setIsCorrespondingAuthor(e.target.checked)
-                      }
-                    />
-                    <span className="ml-1">Corresponding Author</span>
-                  </label>
+                  <button
+                    type="button"
+                    className="ml-2 bg-blue-500 text-white px-4 py-2 rounded"
+                    onClick={handleGoButtonClick}
+                  >
+                    Go
+                  </button>
                 </div>
-                {errors.name && (
-                  <p className="text-red-500 text-xs italic">{errors.name}</p>
-                )}
-              </div>
-              {/* Affiliation */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Affiliation:</label>
-                <textarea
-                  className={`form-input mt-1 block w-full border border-gray-300 ${
-                    errors.affiliation ? "border-red-500" : ""
-                  }`}
-                  value={paperDetails.affiliation || affiliation}
-                  onChange={(e) => setAffiliation(e.target.value)}
-                ></textarea>
-                {errors.affiliation && (
-                  <p className="text-red-500 text-xs italic">
-                    {errors.affiliation}
-                  </p>
-                )}
-              </div>
-              {/* Country */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Country:</label>
-                <input
-                  type="text"
-                  className={`form-input mt-1 block w-full border border-gray-300 ${
-                    errors.country ? "border-red-500" : ""
-                  }`}
-                  value={paperDetails.country || country}
-                  onChange={(e) => setCountry(e.target.value)}
-                />
-                {errors.country && (
-                  <p className="text-red-500 text-xs italic">
-                    {errors.country}
-                  </p>
-                )}
-              </div>
-              {/* Contact Number */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Contact Number:</label>
-                <input
-                  type="text"
-                  className={`form-input mt-1 block w-full border border-gray-300 ${
-                    errors.contactNumber ? "border-red-500" : ""
-                  }`}
-                  value={paperDetails.contact_no || contactNumber}
-                  onChange={(e) => setContactNumber(e.target.value)}
-                />
-                {errors.contactNumber && (
-                  <p className="text-red-500 text-xs italic">
-                    {errors.contactNumber}
-                  </p>
-                )}
-              </div>
-              {/* Email */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Email:</label>
-                <input
-                  type="email"
-                  className={`form-input mt-1 block w-full border border-gray-300 ${
-                    errors.email ? "border-red-500" : ""
-                  }`}
-                  value={paperDetails.email || email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-xs italic">{errors.email}</p>
-                )}
-              </div>
-              {/* Google Scholar ID */}
-              <div className="mb-4">
-                <label className="block text-gray-700">
-                  Google Scholar ID (Optional):
-                </label>
-                <input
-                  type="text"
-                  className="form-input mt-1 block w-full border border-gray-300"
-                  value={paperDetails.google_sh_id || googlescId}
-                  onChange={(e) => setGooglescId(e.target.value)}
-                />
-              </div>
-              {/* ORCID ID */}
-              <div className="mb-4">
-                <label className="block text-gray-700">
-                  ORCID ID (Optional):
-                </label>
-                <input
-                  type="text"
-                  className="form-input mt-1 block w-full border border-gray-300"
-                  value={paperDetails.orcid_id || orchidId}
-                  onChange={(e) => setOrchidId(e.target.value)}
-                />
-              </div>
-              {/* Title */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Title:</label>
-                <textarea
-                  className={`form-input mt-1 block w-full border border-gray-300 ${
-                    errors.title ? "border-red-500" : ""
-                  }`}
-                  value={paperDetails.title || title}
-                  onChange={(e) => setTitle(e.target.value)}
-                ></textarea>
-                {errors.title && (
-                  <p className="text-red-500 text-xs italic">{errors.title}</p>
-                )}
-              </div>
-              {/* Track */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Track:</label>
-                <select
-                  className={`form-input mt-1 block w-full border border-gray-300 ${
-                    errors.track ? "border-red-500" : ""
-                  }`}
-                  value={selectedTrackId}
-                  onChange={handleTrackChange}
-                >
-                  <option value="">
-                    {paperDetails.track && paperDetails.track.track_name
-                      ? paperDetails.track.track_name
-                      : "Select Track"}
-                        
-                  </option>
-                  {/* <option value="" selected>Name</option> */}
-                  {tracks.map((trackItem) => (
-                    <option key={trackItem._id} value={trackItem._id}>
-                      {trackItem.track_name}
+
+                {/* Conference */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Conference:</label>
+                  <select
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.track ? "border-red-500" : ""
+                    }`}
+                    onChange={handleConferenceChange}
+                  >
+                    <option value="">
+                      {paperDetails && paperDetails.conference_title
+                        ? paperDetails.conference_title
+                        : "Select Conference"}
                     </option>
-                  ))}
-                </select>
-                {errors.track && (
-                  <p className="text-red-500 text-xs italic">{errors.track}</p>
-                )}
-              </div>
-              {/* Topic */}
-              {/* <div className="mb-4">
-                  <label className="block text-gray-700">Topic:</label>
+                    {conferenceList.map((conferenceItem) => (
+                      <option key={conferenceItem._id} value={conferenceItem._id}>
+                        {toSentenceCase(conferenceItem.conference_title)}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.track && (
+                    <p className="text-red-500 text-xs italic">{errors .track}</p>
+                  )}
+                </div>
+
+                {/* Name */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Name:</label>
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      className={`form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300 ${
+                        errors.name ? "border-red-500" : ""
+                      }`}
+                      value={toSentenceCase(name)}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                    <label className="ml-2">
+                      <input
+                        type="checkbox"
+                        className="form-checkbox"
+                        checked={isCorrespondingAuthor}
+                        onChange={(e) =>
+                          setIsCorrespondingAuthor(e.target.checked)
+                        }
+                      />
+                      <span className="ml-1">Corresponding Author</span>
+                    </label>
+                  </div>
+                  {errors.name && (
+                    <p className="text-red-500 text-xs italic">{errors.name}</p>
+                  )}
+                </div>
+                {/* Affiliation */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Affiliation:</label>
+                  <textarea
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.affiliation ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(
+                      affiliation
+                    )}
+                    onChange={(e) => setAffiliation(e.target.value)}
+                  ></textarea>
+                  {errors.affiliation && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.affiliation}
+                    </p>
+                  )}
+                </div>
+                {/* Country */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Country:</label>
+                  <input
+                    type="text"
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.country ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(country)}
+                    onChange={(e) => setCountry(e.target.value)}
+                  />
+                  {errors.country && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.country}
+                    </p>
+                  )}
+                </div>
+                {/* Contact Number */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Contact Number:</label>
+                  <input
+                    type="text"
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.contactNumber ? "border-red-500" : ""
+                    }`}
+                    value={contactNumber}
+                    onChange={(e) => setContactNumber(e.target.value)}
+                  />
+                  {errors.contactNumber && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.contactNumber}
+                    </p>
+                  )}
+                </div>
+                {/* Email */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Email:</label>
+                  <input
+                    type="email"
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.email ? "border-red-500" : ""
+                    }`}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs italic">{errors.email}</p>
+                  )}
+                </div>
+                {/* Google Scholar ID */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">
+                    Google Scholar ID (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input mt-1 block w-full border border-gray-300"
+                    value={googlescId}
+                    onChange={(e) => setGooglescId(e.target.value)}
+                  />
+                </div>
+                {/* ORCID ID */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">
+                    ORCID ID (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input mt-1 block w-full border border-gray-300"
+                    value={orchidId}
+                    onChange={(e) => setOrchidId(e.target.value)}
+                  />
+                </div>
+                {/* Title */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Title:</label>
+                  <textarea
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.title ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(title)}
+                    onChange={(e) => setTitle(e.target.value)}
+                  ></textarea>
+                  {errors.title && (
+                    <p className="text-red-500 text-xs italic">{errors.title}</p >
+                  )}
+                </div>
+                {/* Track */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Track:</label>
+                  <select
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.track ? "border-red-500" : ""
+                    }`}
+                    value={selectedTrackId}
+                    onChange={handleTrackChange}
+                  >
+                    <option value="">
+                      {paperDetails.track && paperDetails.track.track_name
+                        ? toSentenceCase(paperDetails.track.track_name)
+                        : "Select Track"}
+                    </option>
+                    {tracks.map((trackItem) => (
+                      <option key={trackItem._id} value={trackItem._id}>
+                        {toSentenceCase(trackItem.track_name)}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.track && (
+                    <p className="text-red-500 text-xs italic">{errors.track}</p>
+                  )}
+                </div>
+                {/* Topic */}
+                {/* <div className="mb-4">
+                  <label className="block text-gray-700">Topic:</ label>
                   <select
                     className={`form-select mt-1 block w-full ${errors.topicid ? 'border-red-500' : ''}`}
                     value={topicid}
@@ -548,170 +585,95 @@ const AuthorRegistration = () => {
                   </select>
                   {errors.topicid && <p className="text-red-500 text-xs italic">{errors.topicid}</p>}
                 </div> */}
-              {/* Keywords */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Keywords:</label>
-                <textarea
-                  className={`form-input mt-1 block w-full border border-gray-300 ${
-                    errors.keywords ? "border-red-500" : ""
-                  }`}
-                  value={paperDetails.keywords || keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                ></textarea>
-                {errors.keywords && (
-                  <p className="text-red-500 text-xs italic">
-                    {errors.keywords}
-                  </p>
-                )}
-              </div>
-              {/* Abstract */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Abstract:</label>
-                <textarea
-                  className={`form-input mt-1 block w-full border border-gray-300 ${
-                    errors.abstract ? "border-red-500" : ""
-                  }`}
-                  value={paperDetails.abstract || abstract}
-                  onChange={(e) => setAbstract(e.target.value)}
-                ></textarea>
-                {errors.abstract && (
-                  <p className="text-red-500 text-xs italic">
-                    {errors.abstract}
-                  </p>
-                )}
-              </div>
-              {/* PDF File */}
-              <div className="mb-4 flex flex-col">
-                <label className="block text-gray-700">PDF File:</label>
-                {paperDetails.pdfLink && (
-                  <div className="mb-2">
-                    <a
-                      href={paperDetails.pdfLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      View Current PDF
-                    </a>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  className={`form-input mt-1 block w-full ${errors.pdfFile ? 'border-red-500' : ''}`}
-                  onChange={(e) => setPdfFile(e.target.files[0])}
-                />
-                {errors.pdfFile && (
-                  <p className="text-red-500 text-xs italic">
-                    {errors.pdfFile}
-                  </p>
-                )}
-              </div>
-              {/* Co-Authors */}
-              <div className="mb-4">
-                <label className="block text-gray-700">Co-Authors:</label>
-                {paperDetails.co_authors
-                  ? paperDetails.co_authors.map((coAuthor, index) => (
-                      <div key={index} className="flex space-x-4 items-center">
-                        <input
-                          type="text"
-                          className="form-input mt-1 block w-1/2 border border-gray-300"
-                          placeholder="Name"
-                          value={coAuthor.name}
-                          onChange={(e) =>
-                            handleCoAuthorChange(index, "name", e.target.value)
-                          }
-                        />
-                        <input
-                          type="email"
-                          className="form-input mt-1 block w-1/2 border border-gray-300"
-                          placeholder="Email"
-                          value={coAuthor.email}
-                          onChange={(e) =>
-                            handleCoAuthorChange(index, "email", e.target.value)
-                          }
-                        />
-                        <input
-                          type="text"
-                          className="form-input mt-1 block w-1/2 border border-gray-300"
-                          placeholder="Mobile"
-                          value={coAuthor.contact_no}
-                          onChange={(e) =>
-                            handleCoAuthorChange(
-                              index,
-                              "mobile",
-                              e.target.value
-                            )
-                          }
-                        />
-                        <input
-                          type="text"
-                          className="form-input mt-1 block w-1/2 border border-gray-300"
-                          placeholder="Affiliation"
-                          value={coAuthor.affiliation}
-                          onChange={(e) =>
-                            handleCoAuthorChange(
-                              index,
-                              "affiliation",
-                              e.target.value
-                            )
-                          }
-                        />
-                        <input
-                          type="text"
-                          className="form-input mt-1 block w-1/2 border border-gray-300"
-                          placeholder="Country"
-                          value={coAuthor.country}
-                          onChange={(e) =>
-                            handleCoAuthorChange(
-                              index,
-                              "country",
-                              e.target.value
-                            )
-                          }
-                        />
-                        <button
-                          type="button"
-                          className="bg-red-500 text-white px-5 py-1 rounded"
-                          onClick={() => handleDeleteCoAuthor(index)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))
-                  : CoAuthors.map((coAuthor, index) => (
-                      <div key={index} className="mb-2">
-                        <div className="flex items-center">
+                {/* Keywords */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Keywords:</label>
+                  <textarea
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.keywords ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(keywords)}
+                    onChange={(e) => setKeywords(e.target.value)}
+                  ></textarea>
+                  {errors.keywords && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.keywords}
+                    </p>
+                  )}
+                </div>
+                {/* Abstract */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Abstract:</label>
+                  <textarea
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.abstract ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(abstract)}
+                    onChange={(e) => setAbstract(e.target.value)}
+                  ></textarea>
+                  {errors.abstract && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.abstract}
+                    </p>
+                  )}
+                </div>
+                {/* PDF File */}
+                <div className="mb-4 flex flex-col">
+                  <label className="block text-gray-700">PDF File:</label>
+                  {paperDetails.pdfLink && (
+                    <div className="mb-2">
+                      <a
+                        href={paperDetails.pdfLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                      >
+                        View Current PDF
+                      </a>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    className={`form-input mt-1 block w-full ${
+                      errors.pdfFile ? "border-red-500" : ""
+                    }`}
+                    onChange={(e) => setPdfFile(e.target.files[0])}
+                  />
+                  {errors.pdfFile && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.pdfFile}
+                    </p>
+                  )}
+                </div>
+                {/* Co-Authors */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Co-Authors:</label>
+                  {paperDetails.co_authors
+                    ? paperDetails.co_authors.map((coAuthor, index) => (
+                        <div key={index} className="flex space-x-4 items-center">
                           <input
                             type="text"
-                            className="form-input mt-1 block w-full mr-3"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Name"
-                            value={coAuthor.name}
+                            value={toSentenceCase(coAuthor.name)}
                             onChange={(e) =>
-                              handleCoAuthorChange(
-                                index,
-                                "name",
-                                e.target.value
-                              )
+                              handleCoAuthorChange(index, "name", e.target.value)
                             }
                           />
                           <input
-                            type="text"
-                            className="form-input mt-1 block w-full mr-3"
+                            type="email"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Email"
                             value={coAuthor.email}
                             onChange={(e) =>
-                              handleCoAuthorChange(
-                                index,
-                                "email",
-                                e.target.value
-                              )
+                              handleCoAuthorChange(index, "email", e.target.value)
                             }
                           />
                           <input
                             type="text"
-                            className="form-input mt-1 block w-full mr-3"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Mobile"
-                            value={coAuthor.mobile}
+                            value={coAuthor.contact_no}
                             onChange={(e) =>
                               handleCoAuthorChange(
                                 index,
@@ -722,9 +684,9 @@ const AuthorRegistration = () => {
                           />
                           <input
                             type="text"
-                            className="form-input mt-1 block w-full mr-3"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Affiliation"
-                            value={coAuthor.affiliation}
+                            value={toSentenceCase(coAuthor.affiliation)}
                             onChange={(e) =>
                               handleCoAuthorChange(
                                 index,
@@ -735,9 +697,9 @@ const AuthorRegistration = () => {
                           />
                           <input
                             type="text"
-                            className="form-input mt-1 block w-1/2 mr-3"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Country"
-                            value={coAuthor.country}
+                            value={toSentenceCase(coAuthor.country)}
                             onChange={(e) =>
                               handleCoAuthorChange(
                                 index,
@@ -746,65 +708,611 @@ const AuthorRegistration = () => {
                               )
                             }
                           />
-                          <label className="mr-2">
+                          <button
+                            type="button"
+                            className="bg-red-500 text-white px-5 py-1 rounded"
+                            onClick={() => handleDeleteCoAuthor(index)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))
+                    : CoAuthors.map((coAuthor, index) => (
+                        <div key={index} className="mb-2">
+                          <div className="flex items-center">
                             <input
-                              type="checkbox"
-                              className="form-checkbox"
-                              checked={coAuthor.isCorresponding}
+                              type="text"
+                              className="form-input mt-1 block w-full mr-3"
+                              placeholder="Name"
+                              value={coAuthor.name}
                               onChange={(e) =>
                                 handleCoAuthorChange(
                                   index,
-                                  "isCorresponding",
-                                  e.target.checked
+                                  "name",
+                                  e.target.value
                                 )
                               }
                             />
-                            <span className="ml-1">Corresponding Author</span>
-                          </label>
+                            <input
+                              type="text"
+                              className="form-input mt-1 block w-full mr-3"
+                              placeholder="Email"
+                              value={coAuthor.email}
+                              onChange={(e) =>
+                                handleCoAuthorChange(
+                                  index,
+                                  "email",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <input
+                              type="text"
+                              className="form-input mt-1 block w-full mr-3"
+                              placeholder="Mobile"
+                              value={coAuthor.mobile}
+                              onChange={(e) =>
+                                handleCoAuthorChange(
+                                  index,
+                                  "mobile",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <input
+                              type="text"
+                              className="form-input mt-1 block w-full mr-3"
+                              placeholder="Affiliation"
+                              value={coAuthor.affiliation}
+                              onChange={(e) =>
+                                handleCoAuthorChange(
+                                  index,
+                                  "affiliation",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <input
+                              type="text"
+                              className="form-input mt-1 block w-1/2 mr-3"
+                              placeholder="Country"
+                              value={coAuthor.country}
+                              onChange={(e) =>
+                                handleCoAuthorChange(
+                                  index,
+                                  "country",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <label className="mr-2">
+                              <input
+                                type="checkbox"
+                                className="form-checkbox"
+                                checked={coAuthor.isCorresponding}
+                                onChange={(e) =>
+                                  handleCoAuthorChange(
+                                    index,
+                                    "isCorresponding",
+                                    e.target.checked
+                                  )
+                                }
+                              />
+                              <span className="ml-1">Corresponding Author</span>
+                            </label>
+                            <button
+                              type="button"
+                              className="bg-red-500 text-white px-4 py-2 rounded"
+                              onClick={() => handleDeleteCoAuthor(index)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                  <button
+                    type="button"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    onClick={handleAddCoAuthor}
+                  >
+                    Add Co-Author
+                  </button>
+                </div>
+
+                <div className="flex justify-center md:space-x-6 md:gap-4">
+                  {/* Submit or Edit Button */}
+                  <button
+                    type="submit"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    disabled={loading}
+                  >
+                    Save Changes
+                    
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-red-500 text-white px-5 py-1 rounded hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    onClick={handleWithdrawButtonClick}
+                  >
+                    Withdraw Paper
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleFormSubmit}>
+                {/*Ppaer ID Search and Go button*/}
+                <label className="block text-gray-700">Paper Id:</label>
+                <div className="flex items-center">
+                  <input
+                    type="text"
+                    className="form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300"
+                    value={paperID}
+                    onChange={(e) => setPaperID(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="ml-2 bg-blue-500 text-white px-4 py-2 rounded"
+                    onClick={handleGoButtonClick}
+                  >
+                    Go
+                  </button>
+                </div>
+
+                {/* Conference */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Conference:</label>
+                  <select
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.track ? "border-red-500" : ""
+                    }`}
+                    onChange={handleConferenceChange}
+                  >
+                    <option value="">
+                      {paperDetails && paperDetails.conference_title
+                        ? paperDetails.conference_title
+                        : "Select Conference"}
+                    </option>
+                    {conferenceList.map((conferenceItem) => (
+                      <option key={conferenceItem._id} value={conferenceItem._id}>
+                        {toSentenceCase(conferenceItem.conference_title)}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.track && (
+                    <p className="text-red-500 text-xs italic">{errors.track}</p>
+                  )}
+                </div>
+
+                {/* Name */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Name:</label>
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      className={`form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300 ${
+                        errors.name ? "border-red-500" : ""
+                      }`}
+                      value={toSentenceCase(name)}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                    <label className="ml-2">
+                      <input
+                        type="checkbox"
+                        className="form-checkbox"
+                        checked={isCorrespondingAuthor}
+                        onChange={(e) =>
+                          setIsCorrespondingAuthor(e.target.checked)
+                        }
+                      />
+                      <span className="ml-1">Corresponding Author</span>
+                    </label>
+                  </div>
+                  {errors.name && (
+                    <p className="text-red-500 text-xs italic">{errors.name}</p>
+                  )}
+                </div>
+                {/* Affiliation */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Affiliation:</label>
+                  <textarea
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.affiliation ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(
+                      affiliation
+                    )}
+                    onChange={(e) => setAffiliation(e.target.value)}
+                  ></textarea>
+                  {errors.affiliation && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.affiliation}
+                    </p>
+                  )}
+                </div>
+                {/* Country */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Country:</label>
+                  <input
+                    type="text"
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.country ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(country)}
+                    onChange={(e) => setCountry(e.target.value)}
+                  />
+                  {errors.country && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.country}
+                    </p>
+                  )}
+                </div>
+                {/* Contact Number */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Contact Number:</label>
+                  <input
+                    type="text"
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.contactNumber ? "border-red-500" : ""
+                    }`}
+                    value={contactNumber}
+                    onChange={(e) => setContactNumber(e.target.value)}
+                  />
+                  {errors.contactNumber && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.contactNumber}
+                    </p>
+                  )}
+                </div>
+                {/* Email */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Email:</label>
+                  <input
+                    type="email"
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.email ? "border-red-500" : ""
+                    }`}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs italic">{errors.email}</p>
+                  )}
+                </div>
+                {/* Google Scholar ID */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">
+                    Google Scholar ID (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input mt-1 block w-full border border-gray-300"
+                    value={googlescId}
+                    onChange={(e) => setGooglescId(e.target.value)}
+                  />
+                </div>
+                {/* ORCID ID */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">
+                    ORCID ID (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input mt-1 block w-full border border-gray-300"
+                    value={orchidId}
+                    onChange={(e) => setOrchidId(e.target.value)}
+                  />
+                </div>
+                {/* Title */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Title:</label>
+                  <textarea
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.title ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(title)}
+                    onChange={(e) => setTitle(e.target.value)}
+                  ></textarea>
+                  {errors.title && (
+                    <p className="text-red-500 text-xs italic">{errors.title}</p>
+                  )}
+                </div>
+                {/* Track */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Track:</label>
+                  <select
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.track ? "border-red-500" : ""
+                    }`}
+                    value={selectedTrackId}
+                    onChange={handleTrackChange}
+                  >
+                    <option value="">
+                      {paperDetails.track && paperDetails.track.track_name
+                        ? toSentenceCase(paperDetails.track.track_name)
+                        : "Select Track"}
+                    </option>
+                    {tracks.map((trackItem) => (
+                      <option key={trackItem._id} value={trackItem._id}>
+                        {toSentenceCase(trackItem.track_name)}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.track && (
+                    <p className="text-red-500 text-xs italic">{errors.track}</p>
+                  )}
+                </div>
+                {/* Topic */}
+                {/* <div className="mb-4">
+                  <label className="block text-gray-700">Topic:</ label>
+                  <select
+                    className={`form-select mt-1 block w-full ${errors.topicid ? 'border-red-500' : ''}`}
+                    value={topicid}
+                    onChange={(e) => setTopicid(e.target.value)}
+                  >
+                    <option value="">Select Topic</option>
+                    {topics.map((topicItem) => (
+                      <option key={topicItem.topic_id} value={topicItem.topic_id}>
+                        {topicItem.topic_name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.topicid && <p className="text-red-500 text-xs italic">{errors.topicid}</p>}
+                </div> */}
+                {/* Keywords */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Keywords:</label>
+                  <textarea
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.keywords ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(keywords)}
+                    onChange={(e) => setKeywords(e.target.value)}
+                  ></textarea>
+                  {errors.keywords && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.keywords}
+                    </p>
+                  )}
+                </div>
+                {/* Abstract */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Abstract:</label>
+                  <textarea
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.abstract ? "border-red-500" : ""
+                    }`}
+                    value={toSentenceCase(abstract)}
+                    onChange={(e) => setAbstract(e.target.value)}
+                  ></textarea>
+                  {errors.abstract && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.abstract}
+                    </p>
+                  )}
+                </div>
+                {/* PDF File */}
+                <div className="mb-4 flex flex-col">
+                  <label className="block text-gray-700">PDF File:</label>
+                  {paperDetails.pdfLink && (
+                    <div className="mb-2">
+                      <a
+                        href ={paperDetails.pdfLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                      >
+                        View Current PDF
+                      </a>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    className={`form-input mt-1 block w-full ${
+                      errors.pdfFile ? "border-red-500" : ""
+                    }`}
+                    onChange={(e) => setPdfFile(e.target.files[0])}
+                  />
+                  {errors.pdfFile && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.pdfFile}
+                    </p>
+                  )}
+                </div>
+                {/* Co-Authors */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Co-Authors:</label>
+                  {paperDetails.co_authors
+                    ? paperDetails.co_authors.map((coAuthor, index) => (
+                        <div key={index} className="flex space-x-4 items-center">
+                          <input
+                            type="text"
+                            className="form-input mt-1 block w-1/ 2 border border-gray-300"
+                            placeholder="Name"
+                            value={toSentenceCase(coAuthor.name)}
+                            onChange={(e) =>
+                              handleCoAuthorChange(index, "name", e.target.value)
+                            }
+                          />
+                          <input
+                            type="email"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
+                            placeholder="Email"
+                            value={coAuthor.email}
+                            onChange={(e) =>
+                              handleCoAuthorChange(index, "email", e.target.value)
+                            }
+                          />
+                          <input
+                            type="text"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
+                            placeholder="Mobile"
+                            value={coAuthor.contact_no}
+                            onChange={(e) =>
+                              handleCoAuthorChange(
+                                index,
+                                "mobile",
+                                e.target.value
+                              )
+                            }
+                          />
+                          <input
+                            type="text"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
+                            placeholder="Affiliation"
+                            value={toSentenceCase(coAuthor.affiliation)}
+                            onChange={(e) =>
+                              handleCoAuthorChange(
+                                index,
+                                "affiliation",
+                                e.target.value
+                              )
+                            }
+                          />
+                          <input
+                            type="text"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
+                            placeholder="Country"
+                            value={toSentenceCase(coAuthor.country)}
+                            onChange={(e) =>
+                              handleCoAuthorChange(
+                                index,
+                                "country",
+                                e.target.value
+                              )
+                            }
+                          />
                           <button
                             type="button"
-                            className="bg-red-500 text-white px-4 py-2 rounded"
+                            className="bg-red-500 text-white px-5 py-1 rounded"
                             onClick={() => handleDeleteCoAuthor(index)}
                           >
-                            Delete
+                            Remove
                           </button>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    : CoAuthors.map((coAuthor, index) => (
+                        <div key={index} className="mb-2">
+                          <div className="flex items-center">
+                            <input
+                              type="text"
+                              className="form-input mt-1 block w-full mr-3"
+                              placeholder="Name"
+                              value={coAuthor.name}
+                              onChange={(e) =>
+                                handleCoAuthorChange(
+                                  index,
+                                  "name",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <input
+                              type="text"
+                              className="form-input mt-1 block w-full mr-3"
+                              placeholder="Email"
+                              value={coAuthor.email}
+                              onChange={(e) =>
+                                handleCoAuthorChange(
+                                  index,
+                                  "email",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <input
+                              type="text"
+                              className="form-input mt-1 block w-full mr-3"
+                              placeholder="Mobile"
+                              value={coAuthor.mobile}
+                              onChange={(e) =>
+                                handleCoAuthorChange(
+                                  index,
+                                  "mobile",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <input
+                              type="text"
+                              className="form-input mt-1 block w-full mr-3"
+                              placeholder="Affiliation"
+                              value={coAuthor.affiliation}
+                              onChange={(e) =>
+                                handleCoAuthorChange(
+                                  index,
+                                  "affiliation",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <input
+                              type="text"
+                              className="form-input mt-1 block w-1/2 mr-3"
+                              placeholder="Country"
+                              value={coAuthor.country}
+                              onChange={(e) =>
+                                handleCoAuthorChange(
+                                  index,
+                                  "country",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <label className="mr-2">
+                              <input
+                                type="checkbox"
+                                className="form-checkbox"
+                                checked={coAuthor.isCorresponding}
+ onChange={(e) =>
+                                  handleCoAuthorChange(
+                                    index,
+                                    "isCorresponding",
+                                    e.target.checked
+                                  )
+                                }
+                              />
+                              <span className="ml-1">Corresponding Author</span>
+                            </label>
+                            <button
+                              type="button"
+                              className="bg-red-500 text-white px-4 py-2 rounded"
+                              onClick={() => handleDeleteCoAuthor(index)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
 
-                <button
-                  type="button"
-                  className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-                  onClick={handleAddCoAuthor}
-                >
-                  Add Co-Author
-                </button>
-              </div>
-              
-              <div className="flex justify-center md:space-x-6 md:gap-4">
-  {/* Submit or Edit Button */}
-  {editPaper ? (
-    <button
-      type="submit"
-      className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-      disabled={loading}
-    >
-      {loading ? "Submitting..." : "Submit"}
-    </button>
-  ) : (
-    <>
-      <button
-        type="button"
-        className="bg-red-500 text-white px-5 py-1 rounded hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-        onClick={handleWithdrawButtonClick}
-      >
-        Withdraw Paper
-      </button>
-    </>
-  )}
-</div>
+                  <button
+                    type="button"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    onClick={handleAddCoAuthor}
+                  >
+                    Add Co-Author
+                  </button>
+                </div>
 
-            </form>
+                <div className="flex justify-center md:space-x-6 md:gap-4">
+                  {/* Submit or Edit Button */}
+                  <button
+                    type="submit"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    disabled={loading}
+                  >
+                    {loading ? "Submit" : "Submit"}
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-red-500 text-white px-5 py-1 rounded hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    onClick={handleWithdrawButtonClick}
+                  >
+                    Withdraw Paper
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </div>

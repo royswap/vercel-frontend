@@ -25,6 +25,11 @@ function Tpcmembers() {
     }
   }, []);
 
+  const toSentenceCase = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
       {/* Home Icon */}
@@ -48,7 +53,7 @@ function Tpcmembers() {
           <tbody className="divide-y divide-gray-200">
             {members.map((member) => (
               <tr key={member._id}> {/* Ensure each row has a unique key */}
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{member.name}</td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(member.name)}</td>
                 <td className="whitespace-nowrap px-4 py-2 text-gray-700">{member.email}</td>
                 <td className="whitespace-nowrap px-4 py-2 text-gray-700">{member.mobile}</td>
               </tr>

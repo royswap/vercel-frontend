@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react'
-import { gellAllreviewersBeforDate, getalltracks, getallreviewersbytrack } from '../services/ConferenceServices';
-import { createReviewers } from '../services/ConferenceServices';
-import { useNavigate } from 'react-router-dom';
-import homeIcon from '../assets/home36.png';
+import React, { useState, useEffect } from "react";
+import {
+  gellAllreviewersBeforDate,
+  getalltracks,
+  getallreviewersbytrack,
+} from "../services/ConferenceServices";
+import { createReviewers } from "../services/ConferenceServices";
+import { useNavigate } from "react-router-dom";
+import homeIcon from "../assets/home36.png";
 
 function ReviewersRegistration() {
   const [oldmembers, setOldmembers] = useState([]);
   const [tracks, setTracks] = useState([]);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [affiliation, setAffiliation] = useState('');
-  const [country, setCountry] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [googleScholarId, setGoogleScholarId] = useState('');
-  const [orcidId, setOrcidId] = useState('');
+  const [id, setId] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [affiliation, setAffiliation] = useState("");
+  const [country, setCountry] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [googleScholarId, setGoogleScholarId] = useState("");
+  const [orcidId, setOrcidId] = useState("");
   const [reviewers, setReviewers] = useState([]);
   const [selectedTrack, setSelectedTrack] = useState({ id: "", name: "" });
   const [success, setSuccess] = useState(false);
@@ -21,13 +26,13 @@ function ReviewersRegistration() {
   const [conference_name, setConference_name] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [members, setMembers] = useState([]);
-  const [selectedTrackName, setSelectedTrackName] = useState('');
+  const [selectedTrackName, setSelectedTrackName] = useState("");
   const [existingreviewers, setExistingreviewers] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   const [data, SetData] = useState(true);
 
   const navigate = useNavigate();
-
 
   // Handle form submission
   const handleSubmit = (e) => {
@@ -45,42 +50,68 @@ function ReviewersRegistration() {
       googleScholarId,
       orcidId,
     };
-    const isEmailExist = reviewers.some(reviewers => reviewers.email === formData.email);
+
+    const isEmailExist = reviewers.some(
+      (reviewer) => reviewer.email === formData.email
+    );
 
     if (isEmailExist) {
-      alert('Email already exists! Please use a different email.');
-      return; // Exit function if email already exists
+      alert("Email already exists! Please use a different email.");
+      return;
     }
     setReviewers([...reviewers, formData]);
-    console.log('Form Data:', formData);
+
+    // if (isEditing) {
+    //   // Edit mode - Update reviewer details
+    //   setReviewers(
+    //     reviewers.map((reviewer) =>
+    //       reviewer.email === email ? { ...reviewer, ...formData } : reviewer
+    //     )
+    //   );
+    //   setIsEditing(false); // Reset after editing
+    // } else {
+    //   // Add new reviewer
+     
+    // }
+
+    // Clear form data
+    // clearForm();
   };
 
+  // const clearForm = () => {
+  //   setName("");
+  //   setEmail("");
+  //   setAffiliation("");
+  //   setCountry("");
+  //   setMobile("");
+  //   setGoogleScholarId("");
+  //   setOrcidId("");
+  // };
+
   useEffect(() => {
-    const conference_id = sessionStorage.getItem('con');
+    const conference_id = sessionStorage.getItem("con");
     if (conference_id) {
-      getalltracks(conference_id).then((res) => {
-        setTracks(res.data.tracks);
-        setConference_name(res.data.conferenceName);
-        SetData(false);
-
-      }).catch((err) => {
-
-      })
+      getalltracks(conference_id)
+        .then((res) => {
+          setTracks(res.data.tracks);
+          setConference_name(res.data.conferenceName);
+          SetData(false);
+        })
+        .catch((err) => {});
     } else {
       setShowPopup(true);
     }
-
   }, []);
 
   const handleTrackChange = (event) => {
     const selectedTrackId = event.target.value;
-    const selectedTrack = tracks.find(track => track._id === selectedTrackId);
+    const selectedTrack = tracks.find((track) => track._id === selectedTrackId);
     setSelectedTrack({ id: selectedTrack._id, name: selectedTrack.track_name });
-    getallreviewersbytrack(selectedTrackId).then((res) => {
-      setExistingreviewers(res.data);
-    }).catch((err) => {
-
-    })
+    getallreviewersbytrack(selectedTrackId)
+      .then((res) => {
+        setExistingreviewers(res.data);
+      })
+      .catch((err) => {});
   };
 
   const finalsave = () => {
@@ -89,51 +120,99 @@ function ReviewersRegistration() {
       return;
     }
     const transformedData = {
-      "reviewers": reviewers.map(item => ({
-        "name": item.name,
-        "affiliation": item.affiliation,
-        "country": item.country,
-        // "password": item.password,
-        "mobile": item.mobile,
-        "email": item.email
-      }))
+      reviewers: reviewers.map((item) => ({
+        name: item.name,
+        affiliation: item.affiliation,
+        country: item.country,
+        mobile: item.mobile,
+        email: item.email,
+      })),
     };
+    console.log(selectedTrack.id);
     console.log(transformedData);
-    createReviewers(transformedData, selectedTrack.id).then((Response) => {
-      setSuccess(true);
-      setReviewers([]);
-      // console.log(Response.data);
+    
 
+    createReviewers(transformedData, selectedTrack.id)
+      .then((Response) => {
+        // Clear form data
+        setName("");
+        setEmail("");
+        setAffiliation("");
+        setCountry("");
+        setMobile("");
+        setGoogleScholarId("");
+        setOrcidId("");
 
-    }).catch((err) => {
-      if (err.response && err.response.status === 400) {
-        // alert("Reviewer already exist");
-        alert(err.response.data.errors[0].error);
-      }
-    })
+        // Update existing reviewers with new data from the response
+        if (Response.data && Response.data.reviewers) {
+          // Use functional state update to ensure the existing state is captured correctly
+          setExistingreviewers((prevReviewers) => [
+            ...prevReviewers,
+            ...Response.data.reviewers,
+          ]);
+        }
 
+        // Clear the reviewers state (form data)
+        setReviewers([]);
+
+        // Show success popup
+        handleSuccess();
+
+        console.log("Reviewers added successfully:", Response.data);
+      })
+      .catch((err) => {
+        if (err.response && err.response.status === 400) {
+          alert(err.response.data.errors[0].error);
+        }
+      });
+  };
+
+  const finalEdit = () => {
+    const formData = {
+      id,
+      name,
+      email,
+      affiliation,
+      country,
+      mobile,
+      googleScholarId,
+      orcidId,
+    };
+    console.log(formData);
+    // console.log(members._id);
+    // Update the reviewers state with the edited data
+  setReviewers(
+    reviewers.map((reviewer) =>
+      reviewer.email === email ? { ...reviewer, ...formData } : reviewer
+    )
+  );
+  setIsEditing(false); // Reset after editing
   }
+
   const handleRedirect = () => {
     // history.push('/another-page'); // Change '/another-page' to the actual path you want to redirect to
-    navigate('/select-conference');
+    navigate("/select-conference");
   };
+
+  // Function to show success message
+  const handleSuccess = () => {
+    setSuccess(true);
+
+    // Hide success message after 3 seconds
+    setTimeout(() => {
+      setSuccess(false);
+    }, 3000); // 3000ms = 3 seconds
+  };
+
   const getoldreviewers = () => {
-    const conference_id = sessionStorage.getItem('con');
+    const conference_id = sessionStorage.getItem("con");
     if (conference_id) {
-      gellAllreviewersBeforDate(conference_id).then((res) => {
-        setOldmembers(res.data);
-      }).catch((err) => {
-
-      })
+      gellAllreviewersBeforDate(conference_id)
+        .then((res) => {
+          setOldmembers(res.data);
+        })
+        .catch((err) => {});
     }
-  }
-
-  const handleRowClick = (id) => {
-    setSelectedRows((prevSelectedRows) =>
-      prevSelectedRows.includes(id)
-        ? prevSelectedRows.filter(rowId => rowId !== id)
-        : [...prevSelectedRows, id]
-    );
   };
 
   const handleAddClick = () => {
@@ -141,46 +220,77 @@ function ReviewersRegistration() {
       alert("select track first");
       return;
     }
-    const selectedMembers = oldmembers.filter(member =>
+    const selectedMembers = oldmembers.filter((member) =>
       selectedRows.includes(member._id)
     );
 
-    const duplicateMembers = selectedMembers.filter(member =>
-      reviewers.some(existingMember => existingMember._id === member._id)
+    const duplicateMembers = selectedMembers.filter((member) =>
+      reviewers.some((existingMember) => existingMember._id === member._id)
     );
 
     if (duplicateMembers.length > 0) {
-      window.alert('Some of the selected members are already added.');
+      window.alert("Some of the selected members are already added.");
     } else {
       setReviewers((prevMembers) => [...prevMembers, ...selectedMembers]);
       console.log(selectedMembers); // or process the selected members as needed
     }
     setSelectedRows([]);
   };
+
+  const handleRowClick = (member) => {
+    setId(member._id);
+    setName(member.name);
+    setEmail(member.email);
+    setAffiliation(member.affiliation || "");
+    setCountry(member.country || "");
+    setMobile(member.mobile || "");
+    setGoogleScholarId(member.googleScholarId || "");
+    setOrcidId(member.orcidId || "");
+    setIsEditing(true);
+  };
+
+  const handleRowClick2 = (member) => {
+  if (selectedRows.includes(member._id)) {
+    setSelectedRows(selectedRows.filter((id) => id !== member._id));
+  } else {
+    setSelectedRows([...selectedRows, member._id]);
+  }
+};
+
   const deleteEach = (email) => {
-    setReviewers(reviewers.filter(member => member.email !== email));
+    setReviewers(reviewers.filter((member) => member.email !== email));
     //console.log(email);
   };
 
   const redirectToHome = () => {
-    navigate('/select-conference'); //redirection by home icon 
+    navigate("/select-conference"); //redirection by home icon
+  };
+
+  const toSentenceCase = (text) => {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
   return (
-    <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded overflow-auto bg-slate-50'>
-      {/* Home Icon */}
-      <div className="w-full text-left mb-4">
+    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded overflow-auto bg-slate-50">
+      {/* Home Icon and Title in One Line */}
+      <div className="relative flex items-center">
         <img
           src={homeIcon}
           alt="Home"
           className="cursor-pointer w-8 h-8"
           onClick={redirectToHome}
         />
+        <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
+          <u>Include the Reviewers</u>
+        </div>
       </div>
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded shadow-lg text-center">
-            <h2 className="text-xl font-semibold mb-4">Conference ID Missing</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              Conference ID Missing
+            </h2>
             <p className="mb-4">Please select a conference to proceed.</p>
             <button
               onClick={handleRedirect}
@@ -195,16 +305,20 @@ function ReviewersRegistration() {
         <div>Loading..</div>
       ) : (
         <>
-          <div className='md:flex justify-between'>
-            <div className='m-2 md:m-4'>
-              <h2 className='text-xl md:text-2xl text font-semibold text-black'>Conference Name : {conference_name}</h2>
+          <div className="md:flex justify-between">
+            <div className="m-2 md:m-4">
+              <h2 className="text-xl md:text-2xl text font-semibold text-black">
+                Conference Name : {toSentenceCase(conference_name)}
+              </h2>
             </div>
             <div>
               <label
                 htmlFor="expectedSubmissions"
                 className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
               >
-                <span className="text-xs font-medium text-gray-700">Select Track</span>
+                <span className="text-xs font-medium text-gray-700">
+                  Select Track
+                </span>
                 <select
                   id="expectedSubmissions"
                   name="expectedSubmissions"
@@ -213,10 +327,12 @@ function ReviewersRegistration() {
                   onChange={handleTrackChange}
                   required
                 >
-                  <option value="" disabled>Select an option</option>
+                  <option value="" disabled>
+                    Select an option
+                  </option>
                   {tracks.map((track) => (
                     <option key={track._id} value={track._id}>
-                      {track.track_name}
+                      {toSentenceCase(track.track_name)}
                     </option>
                   ))}
                 </select>
@@ -227,14 +343,14 @@ function ReviewersRegistration() {
           <div>
             {/* row1 */}
             <form onSubmit={handleSubmit}>
-              <div className='p-3 space-y-4 md:space-y-0 md:space-x-4 md:flex'>
-                <div className='flex-1'>
+              <div className="p-3 space-y-4 md:space-y-0 md:space-x-4 md:flex">
+                <div className="flex-1">
                   <label
                     htmlFor="name"
                     className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
-                      Name<span style={{ color: 'red' }}>*</span>
+                      Name<span style={{ color: "red" }}>*</span>
                     </span>
                     <input
                       type="text"
@@ -247,13 +363,13 @@ function ReviewersRegistration() {
                     />
                   </label>
                 </div>
-                <div className='flex-1'>
+                <div className="flex-1">
                   <label
                     htmlFor="email"
                     className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
-                      Email<span style={{ color: 'red' }}>*</span>
+                      Email<span style={{ color: "red" }}>*</span>
                     </span>
                     <input
                       type="email"
@@ -276,7 +392,7 @@ function ReviewersRegistration() {
                     className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
-                      Affiliation<span style={{ color: 'red' }}>*</span>
+                      Affiliation<span style={{ color: "red" }}>*</span>
                     </span>
                     <input
                       type="text"
@@ -295,7 +411,7 @@ function ReviewersRegistration() {
                     className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
-                      Country<span style={{ color: 'red' }}>*</span>
+                      Country<span style={{ color: "red" }}>*</span>
                     </span>
                     <input
                       type="text"
@@ -314,13 +430,13 @@ function ReviewersRegistration() {
                     className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
-                      Mobile<span style={{ color: 'red' }}>*</span>
+                      Mobile<span style={{ color: "red" }}>*</span>
                     </span>
                     <input
                       type="text"
                       id="mobile"
                       name="mobile"
-                      className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
+                      className="mt-1 w-full border-none p- 0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       value={mobile}
                       onChange={(e) => setMobile(e.target.value)}
                       required
@@ -347,7 +463,7 @@ function ReviewersRegistration() {
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       value={googleScholarId}
                       onChange={(e) => setGoogleScholarId(e.target.value)}
-                      required
+                      // required
                     />
                   </label>
                 </div>
@@ -367,90 +483,106 @@ function ReviewersRegistration() {
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       value={orcidId}
                       onChange={(e) => setOrcidId(e.target.value)}
-                      required
+                      // required
                     />
                   </label>
                 </div>
               </div>
 
-              <div className='flex items-center justify-center mt-3'>
-                <button
-                  className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-                  type="submit"
-
-                >
-                  Save
-                </button>
+              <div className="flex items-center justify-center mt-3">
+              {isEditing ? (
+                  <button
+                    className="inline-block rounded border border-indigo-600 bg-slate-300 px-7 py-2 text-sm font-medium text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    type="button"
+                    onClick={finalEdit}
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <button
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring active:text-indigo-700"
+                    type="submit"
+                  >
+                    Save
+                  </button>
+                )}
               </div>
             </form>
-
           </div>
           {/* ----------Old Reviewrs--------- */}
-          <div className='w-full h-auto md:flex'>
-            <div className='mt-4 w-full h-96 border border-3 shadow-sm'>
-              <div className='text-center text-xl font-semibold'>
-                <h2>Old Reviewers</h2>
+          <div className="w-full h-auto md:flex">
+            <div className="mt-4 w-full h-96 border border-3 shadow-sm">
+              <div className="text-center text-xl font-semibold">
+                <h2>Reviewers List</h2>
               </div>
+
               {/* for old members table */}
-              <div className='mt-2  w-full h-72 overflow-auto'>
+              <div className="mt-2  w-full h-72 overflow-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Name
                       </th>
 
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Email
                       </th>
-
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {oldmembers.map((member) => (
-                      <tr key={member.id}
-                        onClick={() => handleRowClick(member._id)}
-                        className={`cursor-pointer ${selectedRows.includes(member._id) ? 'bg-gray-200' : ''}`}
+                      <tr
+                        key={member.id}
+                        onClick={() => {handleRowClick(member); handleRowClick2(member);}}
+                        className={`cursor-pointer ${
+                          selectedRows.includes(member._id) ? "bg-gray-200" : ""
+                        }`}
                       >
-
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {member.name}
+                          {toSentenceCase(member.name)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {member.email}
                         </td>
-
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               {/* for button */}
-              <div className='flex justify-center gap-3'>
-                <div className='flex items-center justify-center mt-3'>
+              <div className="flex justify-center gap-3">
+                <div className="flex items-center justify-center mt-3">
                   <button
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate- 300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     type="submit"
                     onClick={getoldreviewers}
                   >
-                    Old Reviewers
+                    Reviewers List
                   </button>
                 </div>
-                <div className='flex items-center justify-center mt-3'>
+                <div className="flex items-center justify-center mt-3">
                   <button
                     className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     type="submit"
                     onClick={handleAddClick}
                   >
-                    Add
+                    Select
                   </button>
                 </div>
               </div>
             </div>
+
             {/* -----------------Reviewers----------------- */}
-            <div className='mt-4 w-full h-96 border border-3 shadow-sm'>
-              <div className='text-center text-xl font-semibold'>
-                <h2>Reviewers For {selectedTrack.name} </h2>
+            <div className="mt-4 w-full h-96 border border-3 shadow-sm">
+              <div className="text-center text-xl font-semibold">
+                <h2>Reviewers For {toSentenceCase(selectedTrack.name)} </h2>
               </div>
               {success && (
                 <div
@@ -470,34 +602,43 @@ function ReviewersRegistration() {
                       clipRule="evenodd"
                     ></path>
                   </svg>
-                  <span className="font-medium">Success!</span> Reviewers Added successfully!
+                  <span className="font-medium">Success!</span> Reviewers Added
+                  successfully!
                 </div>
               )}
-              
-              <div className='mt-2  w-full h-72 overflow-auto'>
+
+              <div className="mt-2  w-full h-72 overflow-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Name
                       </th>
-
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Email
                       </th>
 
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-
-                      </th>
-
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      ></th>
                     </tr>
                   </thead>
-                  
+
                   <tbody className="bg-white divide-y divide-gray-200">
                     {existingreviewers.map((reviewer) => (
-                      <tr>
+                      <tr
+                        key={reviewer.email}
+                        onClick={() => handleRowClick(reviewer)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {reviewer.name}
+                          {toSentenceCase(reviewer.name)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {reviewer.email}
@@ -511,14 +652,14 @@ function ReviewersRegistration() {
                           ✖
                         </button>
                         </td> */}
-
                       </tr>
                     ))}
+
                     {/* ---------------------------- */}
                     {reviewers.map((reviewer) => (
-                      <tr>
+                      <tr key={reviewer.email}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {reviewer.name}
+                          {toSentenceCase(reviewer.name)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {reviewer.email}
@@ -532,24 +673,23 @@ function ReviewersRegistration() {
                             ✖
                           </button>
                         </td>
-
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
 
-              <div className='flex justify-center gap-3'>
-                <div className='flex items-center justify-center mt-3'>
+              <div className="flex justify-center gap-3">
+                <div className="flex items-center justify-center mt-3">
                   <button
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     type="submit"
-                    onClick={() => finalsave()}
+                    onClick={finalsave}
                   >
                     Save
                   </button>
                 </div>
-                <div className='flex items-center justify-center mt-3'>
+                {/* <div className="flex items-center justify-center mt-3">
                   <button
                     className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     type="submit"
@@ -559,14 +699,14 @@ function ReviewersRegistration() {
                   >
                     Close
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
         </>
       )}
     </div>
-  )
+  );
 }
 
-export default ReviewersRegistration
+export default ReviewersRegistration;

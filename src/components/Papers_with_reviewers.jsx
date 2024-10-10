@@ -19,6 +19,11 @@ function Papers_with_reviewers() {
       })
       .catch((error) => console.error('Error fetching papers:', error));
   }, []);
+
+  const toSentenceCase = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
   
 
   return (
@@ -59,19 +64,19 @@ function Papers_with_reviewers() {
             {papers.map((paper) => (
               <tr key={paper._id || paper.title}> {/* Ensure unique key */}
                 <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                  {paper.track_name || "N/A"}
+                  {toSentenceCase(paper.track_name || "N/A")}
                 </td>
                 <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                  {paper.paper_title || "N/A"}
+                  {toSentenceCase(paper.paper_title || "N/A")}
                 </td>
                 <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                  {paper.name || "N/A"}
+                  {toSentenceCase(paper.name || "N/A")}
                 </td>
                 <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                  {paper.co_authors || "N/A"}
+                  {toSentenceCase(paper.co_authors || "N/A")}
                 </td>
                 <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                  {paper.reviewers || "N/A"}
+                  {toSentenceCase(paper.reviewers || "N/A")}
                 </td>
               </tr>
             ))}

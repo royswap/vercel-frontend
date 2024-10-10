@@ -25,6 +25,11 @@ function Listofallauthors() {
     navigate('/select-conference'); // Navigate to the select-conference page
   };
 
+  const toSentenceCase = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
       {/* Home Icon */}
@@ -62,14 +67,14 @@ function Listofallauthors() {
             ) : (
               data.map((item, index) => (
                 <tr key={index}> {/* Ensure unique key */}
-                  <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.name}</td>
+                  <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.name)}</td>
                   <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.mobile}</td>
                   <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.email}</td>
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.affiliation}</td>
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.country}</td>
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.author_coauthor}</td>
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.paper_title}</td>
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.track_name}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.affiliation)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.country)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.author_coauthor)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.paper_title)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.track_name)}</td>
                 </tr>
               ))
             )}

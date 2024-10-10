@@ -73,6 +73,7 @@ export const gellAllRoles = () => axios.get('http://localhost:9090/role/getallro
 export const createCommitteeMembers = (members, committee_id) => {
   return axios.post(`${REST_API_BASE_URL}/member/create/${committee_id}`, members);
 }
+
 export const createReviewers = (members, conference_id) => {
   //return axios.post(`http://localhost:9090/Reviewer/createreviewer/${conference_id}`,members);
   return axios.post(`${REST_API_BASE_URL}/reviewer/create/${conference_id}`, members);
@@ -334,3 +335,37 @@ export const fetchTpcMembers = (conference_id) => {
 export const withdrawPaper = (paperId) => {
   return axios.delete(`${REST_API_BASE_URL}/author/deletePaper/${paperId}`);
 };
+
+
+
+export const updateConference = (conference_id, updatedConference) => {
+  return axios.put(`${REST_API_BASE_URL}/conference/update/${conference_id}`, updatedConference);
+};
+
+
+
+export const editCommittee = (com_id, updatedComittee) => {
+  return axios.put(`${REST_API_BASE_URL}/committee/editCommittee/${com_id}`, updatedComittee);
+};
+
+// Update conference by ID
+export const editConference = (conference_id, updatedConference) => {
+  return axios.put(`${REST_API_BASE_URL}/conference/updateConference/${conference_id}`, updatedConference);
+};
+
+export const editMembers = (conference_id, updatedMember) => {
+  return axios.put(`${REST_API_BASE_URL}/member/updateMember/${conference_id}`, updatedMember);
+};
+
+export const editReviewer = (conference_id, updatedReviewer) => {
+  return axios.put(`${REST_API_BASE_URL}/reviewer/updateReviewer/${conference_id}`, updatedReviewer);
+};
+
+export const editAuthor = (updatedAuthor, paperId, pdffile) => {
+  const formData = new FormData();
+  formData.append("pdf", pdffile);
+  formData.append("data", updatedAuthor);
+  // const x = JSON.stringify();
+  return axios.put(`${REST_API_BASE_URL}/author/update/${paperId}`, formData);
+};
+

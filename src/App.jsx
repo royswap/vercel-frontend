@@ -27,6 +27,7 @@ import Paper_allot_reviewer_report from './components/Paper_allot_reviewer_repor
 import ReviewersRegistration from './components/ReviewersRegistration';
 import AuthorRegistration from './components/AuthorRegistration';
 import ReviewPaper from './components/ReviewPaper';
+import ListCommittee from './components/ListCommittee';
 
 function App() {
   return (
@@ -71,6 +72,7 @@ function App() {
                   <Route path="/papers_with_reviewers" element={<Papers_with_reviewers />} />
                   <Route path="/listofallauthors" element={<Listofallauthors />} />
                   <Route path="/paper_allot_reviewer_report" element={<Paper_allot_reviewer_report />} />
+                  <Route path="/listcommittee" element={<ListCommittee />} />
                 </Routes>
               </div>
             </div>

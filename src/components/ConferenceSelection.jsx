@@ -149,7 +149,7 @@ function ConferenceSelection() {
           {/* Column 2 */}
           <div className="md:w-3/4 w-full bg-white p-4 border border-zinc-700 rounded h-full mt-4">
             <div className="flex items-center justify-center text-4xl mb-4">
-              <u>Complete the Conference</u>
+              <u>Complete / Edit the Conference Details</u>
             </div>
             <form className="space-y-6 m-3 p-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -27,7 +27,7 @@ export const createAuthorWork = (authorwork, trackid, conferenceId, pdffile) => 
   formData.append("data", x);
   //return axios.post(`http://localhost:9090/authors/uploadwork/${topicid}/${conferenceId}`,formData);
 
-  return axios.post(`${REST_API_BASE_URL}/author/upload/${conferenceId}/${trackid}`, formData);
+  return axios.post(`${REST_API_BASE_URL}/author/insert/${conferenceId}/${trackid}`, formData);
 };
 export const createConference = (conference) => {
   return axios.post(`${REST_API_BASE_URL}/conference/create`, conference);

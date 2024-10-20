@@ -147,7 +147,7 @@ const AuthorRegistration = () => {
     };
 
     setLoading(true);
-    createAuthorWork(JSON.stringify(authorWorkData), selectedTrackId, conference._id, pdfFile )
+    createAuthorWork(authorWorkData, selectedTrackId, conference._id, pdfFile )
       .then((Response) => {
         // setCompletionMessage(Response.data.message);
         console.log(Response.data);

@@ -80,7 +80,7 @@ const Sidebar = () => {
           subMenu: [
             { title: "List of committees", path: "/ListCommittee" },
             { title: "List of all members", path: "/listofallmembers" },
-            { title: "List of members committee wise", path: "/members_committee_wise" },
+            { title: "List of members committee wise", path: "/CommitteewiseMembers" },
             { title: "TPC Members", path: "/tpcmembers" },
           ],
         },

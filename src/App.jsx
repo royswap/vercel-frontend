@@ -30,6 +30,7 @@ import ReviewPaper from './components/ReviewPaper';
 import ListCommittee from './components/ListCommittee';
 import Listofallmembers from './components/Listofallmembers';
 import CommitteewiseMembers from './components/CommitteewiseMembers';
+import Reviewerwisepapers from './components/Reviewerwisepapers';
 
 function App() {
   return (
@@ -77,6 +78,7 @@ function App() {
                   <Route path="/listcommittee" element={<ListCommittee />} />
                   <Route path="/listofallmembers" element={<Listofallmembers />} />
                   <Route path="/CommitteewiseMembers" element={<CommitteewiseMembers />} />
+                  <Route path="/Reviewerwisepapers" element={<Reviewerwisepapers />} />
                 </Routes>
               </div>
             </div>

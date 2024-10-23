@@ -71,7 +71,7 @@ const Sidebar = () => {
           title: "Review",
           subMenu: [
             { title: "List of reviewers", path: "/listofreviewers" },
-            { title: "List of papers reviewer wise", path: "/papers_reviewer_wise" },
+            { title: "List of papers reviewer wise", path: "/Reviewerwisepapers" },
             { title: "List of papers with reviewers name", path: "/papers_with_reviewers" },
           ],
         },

@@ -113,7 +113,7 @@ function Listpapers_report() {
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Id</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Title</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Track Name</th>
-              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Similarity rating (0-100)</th>
+              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Author Name</th>
             </tr>
           </thead>
 
@@ -134,7 +134,7 @@ function Listpapers_report() {
                   {toSentenceCase(item.track_name)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                  {item.similarity_rating}
+                  {item.author_name}
                 </td>
               </tr>
             ))}

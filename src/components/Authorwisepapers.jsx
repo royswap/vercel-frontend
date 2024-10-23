@@ -55,8 +55,8 @@ function Authorwisepapers() {
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">First Author Email</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">First Author Country</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Co-authors</th>
-              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Copyright form, question or upload</th>
-              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Copy right form submitted</th>
+              {/* <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Copyright form, question or upload</th>
+              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Copy right form submitted</th> */}
             </tr>
           </thead>
 

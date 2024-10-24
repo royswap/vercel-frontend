@@ -30,6 +30,10 @@ import ReviewPaper from './components/ReviewPaper';
 import ListCommittee from './components/ListCommittee';
 import Listofallmembers from './components/Listofallmembers';
 import CommitteewiseMembers from './components/CommitteewiseMembers';
+import Reviewerwisepapers from './components/Reviewerwisepapers';
+import Paperswithplagiarism from './components/Paperswithplagiarism';
+import Papercopyright from './components/Papercopyright';
+import DecisionWiseListOfPapers from './components/DecisionWiseListOfPapers';
 
 function App() {
   return (
@@ -77,6 +81,10 @@ function App() {
                   <Route path="/listcommittee" element={<ListCommittee />} />
                   <Route path="/listofallmembers" element={<Listofallmembers />} />
                   <Route path="/CommitteewiseMembers" element={<CommitteewiseMembers />} />
+                  <Route path="/Reviewerwisepapers" element={<Reviewerwisepapers />} />
+                  <Route path="/Paperswithplagiarism" element={<Paperswithplagiarism />} />
+                  <Route path="/Papercopyright" element={<Papercopyright />} />
+                  <Route path="/DecisionWiseListOfPapers" element={<DecisionWiseListOfPapers />} />
                 </Routes>
               </div>
             </div>

@@ -3,7 +3,7 @@ import { report_authorwisepaper } from '../services/ConferenceServices'
 import { useNavigate } from 'react-router-dom';
 import homeIcon from '../assets/home36.png';
 
-function Authorwisepapers() {
+function Papercopyright() {
   const [data, setData] = useState([]);
   const navigate = useNavigate(); // <-- Initialize navigate
   useEffect(() => {
@@ -29,11 +29,6 @@ function Authorwisepapers() {
 
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
-      {/*
-  Heads up! 👋
-
-  This component comes with some `rtl` classes. Please remove them if they are not needed in your project.
-*/}
       {/* Home Icon */}
       <div className="w-full text-left mb-4">
         <img
@@ -55,8 +50,8 @@ function Authorwisepapers() {
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">First Author Email</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">First Author Country</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Co-authors</th>
-              {/* <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Copyright form, question or upload</th>
-              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Copy right form submitted</th> */}
+              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Copyright form, question or upload</th>
+              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Copy right form submitted</th>
             </tr>
           </thead>
 
@@ -82,4 +77,4 @@ function Authorwisepapers() {
   )
 }
 
-export default Authorwisepapers
+export default Papercopyright;

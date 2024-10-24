@@ -54,10 +54,10 @@ const Sidebar = () => {
             { title: "Author-wise", path: "/authorwisepapers" },
             { title: "Track wise", path: "/trackwisepapers" },
             { title: "List of papers with status", path: "/papers_status_last_upload_date" },
-            { title: "Decision wise list of papers", path: "/decision_wise_papers" },
-            { title: "Score wise list of papers", path: "/score_wise_papers" },
-            { title: "List of papers send for plagiarism check", path: "/papers_plagiarism_check" },
-            { title: "List of papers send for copyright", path: "/papers_copyright" },
+            { title: "Decision wise list of papers", path: "/DecisionWiseListOfPapers" },
+            // { title: "Score wise list of papers", path: "/score_wise_papers" },
+            { title: "List of papers send for plagiarism check", path: "/Paperswithplagiarism" },
+            { title: "List of papers send for copyright", path: "/Papercopyright" },
             {
               title: "Authors",
               subMenu: [
@@ -71,7 +71,7 @@ const Sidebar = () => {
           title: "Review",
           subMenu: [
             { title: "List of reviewers", path: "/listofreviewers" },
-            { title: "List of papers reviewer wise", path: "/papers_reviewer_wise" },
+            { title: "List of papers reviewer wise", path: "/Reviewerwisepapers" },
             { title: "List of papers with reviewers name", path: "/papers_with_reviewers" },
           ],
         },

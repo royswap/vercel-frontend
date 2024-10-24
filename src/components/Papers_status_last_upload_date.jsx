@@ -63,6 +63,12 @@ function Papers_status_last_upload_date() {
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
                 Last date of upload
               </th>
+              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+                Score
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+                Decision
+              </th>
             </tr>
           </thead>
 

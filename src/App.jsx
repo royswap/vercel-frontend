@@ -34,6 +34,8 @@ import Reviewerwisepapers from './components/Reviewerwisepapers';
 import Paperswithplagiarism from './components/Paperswithplagiarism';
 import Papercopyright from './components/Papercopyright';
 import DecisionWiseListOfPapers from './components/DecisionWiseListOfPapers';
+import Login from './components/Login';
+import Register from './components/Register';
 
 function App() {
   return (
@@ -85,6 +87,8 @@ function App() {
                   <Route path="/Paperswithplagiarism" element={<Paperswithplagiarism />} />
                   <Route path="/Papercopyright" element={<Papercopyright />} />
                   <Route path="/DecisionWiseListOfPapers" element={<DecisionWiseListOfPapers />} />
+                  <Route path="/Login" element={<Login />} />
+                  <Route path="/Register" element={<Register />} />
                 </Routes>
               </div>
             </div>

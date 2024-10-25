@@ -288,8 +288,9 @@ const PaperManagement = () => {
                 >
                   <option>Select an option</option>
                   {reviewers.map((reviewer) => (
-                    <option key={reviewer._id} value={reviewer._id}>
-                      {toSentenceCase(reviewer.name)}
+                    <option className='text-sm font-medium text-gray-600 gap-5 '  
+                    key={reviewer._id} value={reviewer._id}>
+                      {toSentenceCase(reviewer.name)} - {reviewer.email}
                     </option>
                   ))}
                 </select>
@@ -314,7 +315,7 @@ const PaperManagement = () => {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="w-full rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
               >
                 Add
               </button>
@@ -454,7 +455,7 @@ const PaperManagement = () => {
           <table className="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
             <thead className="ltr:text-left rtl:text-right">
               <tr>
-                <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Reviewer</th>
+                <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Reviewer Name</th>
                 <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Paper</th>
                 <th className="px-4 py-2"></th>
               </tr>

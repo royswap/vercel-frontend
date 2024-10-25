@@ -419,7 +419,7 @@ function MemberRegistration() {
                       id="name"
                       name="name"
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                      value={toSentenceCase(name)}
+                      value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
                     />
@@ -462,7 +462,7 @@ function MemberRegistration() {
                       id="affiliation"
                       name="affiliation"
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                      value={toSentenceCase(affiliation)}
+                      value={affiliation}
                       onChange={(e) => setAffiliation(e.target.value)}
                       // required
                     />
@@ -545,7 +545,7 @@ function MemberRegistration() {
                       id="country"
                       name="country"
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                      value={toSentenceCase(country)}
+                      value={country}
                       onChange={(e) => setCountry(e.target.value)}
                       required
                     />
@@ -561,7 +561,7 @@ function MemberRegistration() {
                       Mobile
                     </span>
                     <input
-                      type="text"
+                      type="number"
                       id="mobile"
                       name="mobile"
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
@@ -605,7 +605,7 @@ function MemberRegistration() {
                   </button>
                 ) : (
                   <button
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring active:text-indigo-700"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     type="submit"
                   >
                     Save

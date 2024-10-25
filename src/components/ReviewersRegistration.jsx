@@ -501,7 +501,7 @@ function ReviewersRegistration() {
                   </button>
                 ) : (
                   <button
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring active:text-indigo-700"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     type="submit"
                   >
                     Save
@@ -561,7 +561,7 @@ function ReviewersRegistration() {
               <div className="flex justify-center gap-3">
                 <div className="flex items-center justify-center mt-3">
                   <button
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate- 300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     type="submit"
                     onClick={getoldreviewers}
                   >

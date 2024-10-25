@@ -141,7 +141,7 @@ function ConferenceSelection() {
           </div>
           <button
             onClick={toggleEdit}
-            className="fixed bottom-10 left-46 inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium text-white hover:bg-slate-500 focus:outline-none focus:ring active:text-indigo-500"
+            className="fixed bottom-10 left-46 inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
           >
             {isEditing ? "Save" : "Edit"}
           </button>

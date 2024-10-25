@@ -38,6 +38,7 @@ function ReviewInvitation() {
     console.log(formData);
     emailsend(trackId,date,name,designation).then((res)=>{
       console.log(res.data);
+      alert("Email sent successfully");
     }).catch((err)=>{
 
     })
@@ -103,7 +104,7 @@ function ReviewInvitation() {
             </label>
           </div>
           <div className='m-4'>
-            Thank you for your willingness to serve as a reviewer. Peer review is one of the most important activities of our Society, and your help is appreciated. Written comments are usually the most helpful part of a review. Please provide comments on the second page or on separate sheets. The grading section below is intended to help identify key points for written comments, and also to allow comparisons among different reviewers. A good paper should have a high overall score, but does not have to score well in all aspects to be acceptable. For example, a concise, critical review paper is a valuable publication, although it might have little intrinsic originality. A paper that introduces important new concepts might be valuable even with limited experimental work. <br /> <br /> Please accept this invitation of review in the revert mail along with mentioning your conflict of interest. Without this your acceptance to this invitaion will not be considered.<br />Regards
+            Thank you for your willingness to serve as a reviewer. Peer review is one of the most important activities of our Society, and your help is appreciated. Written comments are usually the most helpful part of a review. Please provide comments on the second page or on separate sheets. The grading section below is intended to help identify key points for written comments, and also to allow comparisons among different reviewers. A good paper should have a high overall score, but does not have to score well in all aspects to be acceptable. For example, a concise, critical review paper is a valuable publication, although it might have little intrinsic originality. A paper that introduces important new concepts might be valuable even with limited experimental work. <br /> <br />Regards
           </div>
           <div className="flex gap-4 m-2">
             <div className="flex-1 m-2">

@@ -48,14 +48,14 @@ const Sidebar = () => {
       src: "Chart",
       path: "/select-conference",
       subMenu: [
-        { title: "Papers", 
+        {
+          title: "Papers",
           subMenu: [
             { title: "List of papers", path: "/listofpapers" },
             { title: "Author-wise", path: "/authorwisepapers" },
             { title: "Track wise", path: "/trackwisepapers" },
             { title: "List of papers with status", path: "/papers_status_last_upload_date" },
             { title: "Decision wise list of papers", path: "/DecisionWiseListOfPapers" },
-            // { title: "Score wise list of papers", path: "/score_wise_papers" },
             { title: "List of papers send for plagiarism check", path: "/Paperswithplagiarism" },
             { title: "List of papers send for copyright", path: "/Papercopyright" },
             {
@@ -132,10 +132,7 @@ const Sidebar = () => {
         {subMenu.map((subMenuItem, subSubIndex) => (
           <li key={subSubIndex} className={`text-black text-sm`}>
             <div className="flex justify-between items-center">
-              <Link
-                to={subMenuItem.path}
-                className={`hover:text-white`}
-              >
+              <Link to={subMenuItem.path} className={`hover:text-white`}>
                 {subMenuItem.title}
               </Link>
               {subMenuItem.subMenu && (
@@ -166,15 +163,14 @@ const Sidebar = () => {
   return (
     <div className="flex">
       <div
-        className={` ${
+        className={`${
           open ? "w-64" : "w-20"
-        } bg-yellow-500 h-auto p-4 pt-4 relative duration-300`}
+        } bg-yellow-500 h-screen overflow-y-auto p-4 pt-4 relative duration-300 max-h-screen`}
       >
         <ul className="pt-6">
           {Menus.map((Menu, index) => (
             <li key={index} className="relative">
               <div className="flex justify-between items-center">
-                {/* Main Link for Navigation */}
                 <Link
                   to={Menu.path}
                   className={`flex rounded-md p-2 cursor-pointer hover:bg-light-white text-black text-sm items-center gap-x-4 ${
@@ -187,22 +183,13 @@ const Sidebar = () => {
                     {Menu.title}
                   </span>
                 </Link>
-
-                {/* Dropdown Icon (Only for menus with subMenu) */}
                 {Menu.subMenu && (
-                  <button
-                    onClick={() => toggleSubMenu(index)}
-                    className="text-black"
-                  >
+                  <button onClick={() => toggleSubMenu(index)} className="text-black">
                     {activeMenu === index ? <FaChevronUp /> : <FaChevronDown />}
                   </button>
                 )}
               </div>
-
-              {/* Submenu */}
-              {Menu.subMenu && activeMenu === index && (
-                renderSubMenu(Menu.subMenu, index)
-              )}
+              {Menu.subMenu && activeMenu === index && renderSubMenu(Menu.subMenu, index)}
             </li>
           ))}
         </ul>

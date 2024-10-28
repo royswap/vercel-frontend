@@ -585,7 +585,7 @@ function MemberRegistration() {
                       id="role"
                       name="role"
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                      value={toSentenceCase(role)}
+                      value={role}
                       onChange={(e) => setRole(e.target.value)}
                       required
                     />

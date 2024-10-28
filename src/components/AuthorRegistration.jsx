@@ -893,7 +893,7 @@ const AuthorRegistration = () => {
                       className={`form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300 ${
                         errors.name ? "border-red-500" : ""
                       }`}
-                      value={toSentenceCase(name)}
+                      value={name}
                       onChange={(e) => setName(e.target.value)}
                     />
                     <label className="ml-2">
@@ -919,9 +919,9 @@ const AuthorRegistration = () => {
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.affiliation ? "border-red-500" : ""
                     }`}
-                    value={toSentenceCase(
+                    value={
                       affiliation
-                    )}
+                    }
                     onChange={(e) => setAffiliation(e.target.value)}
                   ></textarea>
                   {errors.affiliation && (
@@ -938,7 +938,7 @@ const AuthorRegistration = () => {
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.country ? "border-red-500" : ""
                     }`}
-                    value={toSentenceCase(country)}
+                    value={country}
                     onChange={(e) => setCountry(e.target.value)}
                   />
                   {errors.country && (
@@ -1010,7 +1010,7 @@ const AuthorRegistration = () => {
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.title ? "border-red-500" : ""
                     }`}
-                    value={toSentenceCase(title)}
+                    value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   ></textarea>
                   {errors.title && (
@@ -1066,7 +1066,7 @@ const AuthorRegistration = () => {
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.keywords ? "border-red-500" : ""
                     }`}
-                    value={toSentenceCase(keywords)}
+                    value={keywords}
                     onChange={(e) => setKeywords(e.target.value)}
                   ></textarea>
                   {errors.keywords && (
@@ -1082,7 +1082,7 @@ const AuthorRegistration = () => {
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.abstract ? "border-red-500" : ""
                     }`}
-                    value={toSentenceCase(abstract)}
+                    value={abstract}
                     onChange={(e) => setAbstract(e.target.value)}
                   ></textarea>
                   {errors.abstract && (
@@ -1129,7 +1129,7 @@ const AuthorRegistration = () => {
                             type="text"
                             className="form-input mt-1 block w-1/ 2 border border-gray-300"
                             placeholder="Name"
-                            value={toSentenceCase(coAuthor.name)}
+                            value={coAuthor.name}
                             onChange={(e) =>
                               handleCoAuthorChange(index, "name", e.target.value)
                             }
@@ -1160,7 +1160,7 @@ const AuthorRegistration = () => {
                             type="text"
                             className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Affiliation"
-                            value={toSentenceCase(coAuthor.affiliation)}
+                            value={coAuthor.affiliation}
                             onChange={(e) =>
                               handleCoAuthorChange(
                                 index,
@@ -1173,7 +1173,7 @@ const AuthorRegistration = () => {
                             type="text"
                             className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Country"
-                            value={toSentenceCase(coAuthor.country)}
+                            value={coAuthor.country}
                             onChange={(e) =>
                               handleCoAuthorChange(
                                 index,

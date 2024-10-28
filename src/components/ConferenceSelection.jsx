@@ -132,7 +132,7 @@ function ConferenceSelection() {
                   </option>
                   {conferences.map((con) => (
                     <option key={con._id} value={con._id}>
-                      {toSentenceCase(con.conference_title)}
+                      {con.conference_title}
                     </option>
                   ))}
                 </select>
@@ -184,7 +184,7 @@ function ConferenceSelection() {
                       type="text"
                       id="shortName"
                       name="short_name"
-                      value={toSentenceCase(selectedconference.short_name)}
+                      value={selectedconference.short_name}
                       onChange={handleInputChange} // Update the input on change
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
@@ -224,7 +224,7 @@ function ConferenceSelection() {
                       type="text"
                       id="venue"
                       name="venue"
-                      value={toSentenceCase(selectedconference.venue)}
+                      value={selectedconference.venue}
                       onChange={handleInputChange} // Update the input on change
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
@@ -243,7 +243,7 @@ function ConferenceSelection() {
                       type="text"
                       id="address"
                       name="address"
-                      value={toSentenceCase(selectedconference.address)}
+                      value={selectedconference.address}
                       onChange={handleInputChange} // Update the input on change
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
@@ -264,7 +264,7 @@ function ConferenceSelection() {
                       type="text"
                       id="place"
                       name="place"
-                      value={toSentenceCase(selectedconference.place)}
+                      value={selectedconference.place}
                       onChange={handleInputChange} // Update the input on change
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
@@ -283,7 +283,7 @@ function ConferenceSelection() {
                       type="text"
                       id="state"
                       name="state"
-                      value={toSentenceCase(selectedconference.state)}
+                      value={selectedconference.state}
                       onChange={handleInputChange} // Update the input on change
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
@@ -302,7 +302,7 @@ function ConferenceSelection() {
                       type="text"
                       id="country"
                       name="country"
-                      value={toSentenceCase(selectedconference.country)}
+                      value={selectedconference.country}
                       onChange={handleInputChange} // Update the input on change
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}

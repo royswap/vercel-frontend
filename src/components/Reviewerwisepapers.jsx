@@ -82,9 +82,9 @@ function Reviewerwisepapers() {
                     <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
                       Reviewers Name
                     </th>
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+                    {/* <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
                       ID
-                    </th>
+                    </th> */}
                     <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
                       Title
                     </th>
@@ -99,9 +99,9 @@ function Reviewerwisepapers() {
                       <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
                       {toSentenceCase(paper.reviewers)}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
+                      {/* <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
                         {paper._id}
-                      </td>
+                      </td> */}
                       <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
                         {paper.paper_title}
                       </td>

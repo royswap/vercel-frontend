@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   gellAllusersBeforDate,
-  gellmembersbycom,
   getallcommittees,
 } from "../services/ConferenceServices";
 import { useNavigate } from "react-router-dom";
@@ -9,29 +8,28 @@ import homeIcon from "../assets/home36.png";
 
 function Listofallmembers() {
   const [data, setData] = useState([]);
-  const [oldmembers, setOldmembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [empty, setEmpty] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
   const [conference_name, setConference_name] = useState("");
   const [committees, setCommittees] = useState([]);
-
-  const navigate = useNavigate(); // <-- Initialize navigate
+  const [searchTerm, setSearchTerm] = useState(""); // State for search term
+  const navigate = useNavigate();
 
   useEffect(() => {
     const conference_id = sessionStorage.getItem("con");
     if (conference_id) {
+      setLoading(true);
       getallcommittees(conference_id)
         .then((res) => {
           setCommittees(res.data.committee);
-          console.log(res.data.committee);
           setConference_name(res.data.conferenceName);
-          // console.log(res.data.conferenceName);
         })
         .catch((err) => {
           console.error(err);
-        });
-      getoldmembers(); // Call getoldmembers here
+        })
+        .finally(() => setLoading(false));
+
+      getoldmembers();
     }
   }, []);
 
@@ -40,14 +38,19 @@ function Listofallmembers() {
     if (conference_id) {
       gellAllusersBeforDate(conference_id)
         .then((res) => {
-          setData(res.data); // Update the data state variable here
+          setData(res.data);
+          if (res.data.length === 0) {
+            setEmpty(true);
+          }
         })
-        .catch((err) => {});
+        .catch((err) => {
+          console.error(err);
+        });
     }
   };
 
   const redirectToHome = () => {
-    navigate("/select-conference"); // <-- This will navigate to the select-conference page
+    navigate("/select-conference");
   };
 
   const toSentenceCase = (text) => {
@@ -60,8 +63,11 @@ function Listofallmembers() {
   committees.forEach((committee) => {
     committeeMap[committee._id] = committee.committee_name;
   });
-  // Debugging: Log the committee map
-  console.log("Committee Map:", committeeMap);
+
+  // Filtered data based on search term
+  const filteredData = data.filter((member) =>
+    member.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded overflow-auto bg-slate-50">
@@ -86,70 +92,84 @@ function Listofallmembers() {
         <>
           <div className="md:flex justify-between">
             <div className="m-2 md:m-4">
-              <h2 className="text-xl md:text-2xl text font-semibold text-black">
-                Conference Name : {toSentenceCase(conference_name)}
+              <h2 className="text-xl md:text-2xl font-semibold text-black">
+                Conference Name: {toSentenceCase(conference_name)}
               </h2>
             </div>
-          </div>
-          <div className="row">
-            <div className="col-12">
-              <table className="table table-striped">
-                <thead>
-                  <tr>
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      Member ID
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      Member Name
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      Email
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      Mobile
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      Committee
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      Role
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {data.map((member) => {
-                    // Log the entire member object to inspect the structure
-                    console.log("Member Object:", member);
-
-                    return (
-                      <tr key={member._id}>
-                        <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                          {member._id}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                          {member.name}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                          {member.email}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                          {member.mobile}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                          {committees.length > 0
-                            ? committeeMap[member.committee_id] ||
-                              "Unknown Committee"
-                            : "Loading..."}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                          {member.role}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="m-2 md:m-4">
+              <input
+                type="text"
+                placeholder="Search by member name..."
+                className="border rounded p-2"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
+          </div>
+          <div className="overflow-auto" style={{ maxHeight: '400px' }}>
+            <table className="table table-striped">
+              <thead>
+                <tr>
+                  <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+                    Member ID
+                  </th>
+                  <th className="whitespace-nowrap px-4 py -2 font-medium text-gray-900">
+                    Member Name
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+                    Email
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+                    Mobile
+                  </th>
+                  {/* <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+                    Committee
+                  </th> */}
+                  <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+                    Role
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredData.map((member) => {
+                  console.log("Member:", member); // Log the entire member object
+
+                  // Check for the correct property name for committee ID
+                  const committeeId =
+                    member.committee_id ||
+                    member.committeeId ||
+                    member.committeeID ||
+                    member.committee; // Modify this line based on the actual property name
+
+                  console.log("Committee ID:", committeeId); // Log the committee ID to see if it's defined
+
+                  return (
+                    <tr key={member._id}>
+                      <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
+                        {member._id}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
+                        {member.name}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
+                        {member.email}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
+                        {member.mobile}
+                      </td>
+                      {/* <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
+                        {committees.length > 0
+                          ? committeeMap[committeeId] || "Unknown Committee"
+                          : "Loading..."}
+                      </td> */}
+                      <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
+                        {member.role}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </>
       )}

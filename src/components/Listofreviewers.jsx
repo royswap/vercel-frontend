@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react'
-import { report_fetchreviewers } from '../services/ConferenceServices'
+import React, { useEffect, useState } from 'react';
+import { report_fetchreviewers } from '../services/ConferenceServices';
 import { useNavigate } from 'react-router-dom';
 import homeIcon from '../assets/home36.png';
 
-
 function Listofreviewers() {
   const [data, setData] = useState([]);
-  const navigate = useNavigate(); // <-- Initialize navigate
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+
   useEffect(() => {
     const conference_id = sessionStorage.getItem('con');
     if (conference_id) {
@@ -14,16 +15,14 @@ function Listofreviewers() {
         setData(res.data);
         console.log(res.data);
         console.log(conference_id);
-        
-        
       }).catch((err) => {
-
-      })
+        console.error(err);
+      });
     }
   }, []);
 
   const redirectToHome = () => {
-    navigate('/select-conference'); // <-- This will navigate to the select-conference page
+    navigate('/select-conference');
   };
 
   const toSentenceCase = (text) => {
@@ -31,26 +30,41 @@ function Listofreviewers() {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  // Filter data based on search term
+  const filteredData = data.filter(item =>
+    item.reviewer_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
-      {/*
-      Heads up! 👋
-    
-      This component comes with some `rtl` classes. Please remove them if they are not needed in your project.
-    */}
+    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-slate-50 rounded overflow-auto">
       {/* Home Icon */}
-      <div className="w-full text-left mb-4">
+      <div className="relative flex items-center mb-4">
         <img
           src={homeIcon}
           alt="Home"
           className="cursor-pointer w-8 h-8"
-          onClick={redirectToHome} // <-- Add this onClick handler
+          onClick={redirectToHome}
         />
+        <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
+          <u>List of Reviewers</u>
+        </div>
+        {/* Search Bar */}
+        <div className="absolute right-0 mr-4">
+          <input
+            type="text"
+            placeholder="Search by Reviewer ID or Name"
+            className="w-64 pl-2 pr-4 py-2 border border-gray-300 rounded-md"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
+      {/* Table with horizontal scroll */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
-          <thead className="ltr:text-left rtl:text-right">
+          <thead className="bg-gray-100">
             <tr>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Reviewer ID</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Track</th>
@@ -63,28 +77,22 @@ function Listofreviewers() {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {data.map((item, index) => (
-              <tr >
+            {filteredData.map((item, index) => (
+              <tr key={index}>
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.reviewer_id)}</td>
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.track_name)}</td>
-
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.name)}</td>
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.affiliation)}</td>
-
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.country)}</td>
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.email}</td>
-
+                <td className="whitespace -nowrap px-4 py-2 font-medium text-gray-900">{item.email}</td>
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.mobile}</td>
-
-
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
     </div>
-  )
+  );
 }
 
-export default Listofreviewers
+export default Listofreviewers;

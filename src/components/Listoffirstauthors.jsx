@@ -1,25 +1,26 @@
-import React, { useEffect, useState } from 'react'
-import { report_fetchfirstsuthors } from '../services/ConferenceServices'
+import React, { useEffect, useState } from 'react';
+import { report_fetchfirstsuthors } from '../services/ConferenceServices';
 import { useNavigate } from 'react-router-dom';
 import homeIcon from '../assets/home36.png';
 
 function Listoffirstauthors() {
   const [data, setData] = useState([]);
-  const navigate = useNavigate(); // <-- Initialize navigate
+  const [searchTerm, setSearchTerm] = useState(''); // State for search term
+  const navigate = useNavigate(); // Initialize navigate
+
   useEffect(() => {
     const conference_id = sessionStorage.getItem('con');
     if (conference_id) {
       report_fetchfirstsuthors(conference_id).then((res) => {
         setData(res.data);
-        
       }).catch((err) => {
-
-      })
+        console.error(err);
+      });
     }
   }, []);
 
   const redirectToHome = () => {
-    navigate('/select-conference'); // <-- This will navigate to the select-conference page
+    navigate('/select-conference'); // Navigate to the select-conference page
   };
 
   const toSentenceCase = (text) => {
@@ -27,25 +28,40 @@ function Listoffirstauthors() {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  // Filter data based on search term
+  const filteredData = data.filter(item =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
-      {/*
-      Heads up! 👋
-    
-      This component comes with some `rtl` classes. Please remove them if they are not needed in your project.
-    */}
-
       {/* Home Icon */}
-      <div className="w-full text-left mb-4">
+      <div className="relative flex items-center mb-4">
         <img
           src={homeIcon}
           alt="Home"
           className="cursor-pointer w-8 h-8"
-          onClick={redirectToHome} // <-- Add this onClick handler
+          onClick={redirectToHome} // Add this onClick handler
+        />
+      
+
+      <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
+          <u>List of Reviewers</u>
+        </div>
+        {/* Search Bar */}
+        <div className="absolute right-0 mr-4">
+        <input
+          type="text"
+          placeholder="Search by author name..."
+          className="w-64 pl-2 pr-4 py-2 border border-gray-300 rounded-md"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+      </div>
 
-      <div className="overflow-x-auto">
+      {/* Table with vertical scroll only */}
+      <div className="overflow-y-auto max-h-96"> {/* Set max height and enable vertical scrolling */}
         <table className="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
           <thead className="ltr:text-left rtl:text-right">
             <tr>
@@ -60,27 +76,30 @@ function Listoffirstauthors() {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {data.map((item, index) => (
-              <tr >
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.name)}</td>
-
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.mobile}</td>
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{item.email}</td>
-
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.affiliation)}</td>
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.country)}</td>
-
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.paper_title)}</td>
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.track_name)}</td>
-
+            {filteredData.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="whitespace-nowrap px-4 py-2 text-center text-gray-500">
+                  No data available
+                </td>
               </tr>
-            ))}
+            ) : (
+              filteredData.map((item, index) => (
+                <tr key={index}>
+                  <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.name)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.mobile}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{item.email}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.affiliation)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.country)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.paper_title)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">{toSentenceCase(item.track_name)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-
     </div>
-  )
+  );
 }
 
-export default Listoffirstauthors
+export default Listoffirstauthors;

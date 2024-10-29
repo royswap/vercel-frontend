@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import homeIcon from "../assets/home36.png";
 
 function CommitteewiseMembers() {
-  const [committees, setCommittees] = useState([]); // Create a state variable to hold the list of committees
+  const [committees, setCommittees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
@@ -15,6 +15,7 @@ function CommitteewiseMembers() {
   const [selectedCommittee, setSelectedCommittee] = useState("");
   const [existingmambers, setExistingmambers] = useState([]);
   const [members, setMembers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState(""); // State for search term
 
   const navigate = useNavigate();
 
@@ -26,10 +27,6 @@ function CommitteewiseMembers() {
           setCommittees(res.data.committee);
           setConference_name(res.data.conferenceName);
           setMembers(res.data.members);
-          console.log();
-          
-          console.log(res.data.committee);
-
           setData(false);
         })
         .catch((err) => {
@@ -66,13 +63,18 @@ function CommitteewiseMembers() {
   };
 
   function redirectToHome() {
-    navigate("/select-conference"); //redirection by home icon
+    navigate("/select-conference"); // Redirection by home icon
   }
 
   const toSentenceCase = (text) => {
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
+
+  // Filtered data based on search term
+  const filteredMembers = existingmambers.filter((member) =>
+    member.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50">
@@ -107,14 +109,21 @@ function CommitteewiseMembers() {
         <div>Loading..</div>
       ) : (
         <>
-          <div className="m-2 md:m-4">
-            <h2 className="text-xl md:text-2xl text font-semibold text-black">
-              Conference Name : {toSentenceCase(conference_name)}
+          <div className="m-2 md:m-4 flex justify-between items-center">
+            <h2 className="text-xl md:text-2xl font-semibold text-black">
+              Conference Name: {toSentenceCase(conference_name)}
             </h2>
+            <input
+              type="text"
+              placeholder="Search by member name..."
+              className="border rounded p-2"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
           <div>
-            <label
+ <label
               htmlFor="expectedSubmissions"
               className="block text-2xl font-medium text-gray-700 m-2 md:m-4"
             >
@@ -146,7 +155,7 @@ function CommitteewiseMembers() {
             <div className="text-center text-xl font-semibold">
               <h2>Members For {toSentenceCase(selectedCommittee.name)}</h2>
             </div>
-            <div className="mt-2  w-full h-72 overflow-auto">
+            <div className="mt-2 w-full h-72 overflow-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -195,7 +204,7 @@ function CommitteewiseMembers() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {existingmambers.map((member) => (
+                  {filteredMembers.map((member) => (
                     <tr key={member._id} onClick={() => handleRowClick(member)}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {toSentenceCase(member.name)}
@@ -217,8 +226,6 @@ function CommitteewiseMembers() {
                       </td>
                     </tr>
                   ))}
-                  
-                  
                 </tbody>
               </table>
             </div>

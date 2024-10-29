@@ -5,6 +5,7 @@ import homeIcon from "../assets/home36.png";
 
 function Papers_with_reviewers() {
   const [papers, setPapers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   const redirectToHome = () => {
@@ -24,18 +25,40 @@ function Papers_with_reviewers() {
     if (!text) return '';
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
-  
+
+  const filteredPapers = papers.filter((paper) => {
+    return (
+      paper.paper_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      paper.reviewers.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   return (
-    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50">
+    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-slate-50 rounded overflow-auto">
       {/* Home Icon */}
-      <div className="w-full text-left mb-4">
+      <div className="relative flex items-center mb-4">
         <img
           src={homeIcon}
           alt="Home"
           className="cursor-pointer w-8 h-8"
           onClick={redirectToHome}
         />
+      
+
+      <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
+          <u>List of Papers with Reviewers</u>
+        </div>
+
+      {/* Search Bar */}
+      <div className="absolute right-0 mr-4">
+        <input
+          type="text"
+          placeholder="Search by Paper Title or Reviewer"
+          className="w-64 pl-2 pr-4 py-2 border border-gray-300 rounded-md"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -61,7 +84,7 @@ function Papers_with_reviewers() {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {papers.map((paper) => (
+            {filteredPapers.map((paper) => (
               <tr key={paper._id || paper.title}> {/* Ensure unique key */}
                 <td className="whitespace-nowrap px-4 py-2 text-gray-700">
                   {toSentenceCase(paper.track_name || "N/A")}

@@ -16,6 +16,7 @@ function Reviewerwisepapers() {
   const [conference_name, setConference_name] = useState("");
   const [empty, setEmpty] = useState(false);
   const [papers, setPapers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState(""); // add search query state
 
   const navigate = useNavigate();
 
@@ -26,7 +27,9 @@ function Reviewerwisepapers() {
         .then((res) => {
           const papersData = res.data;
           setPapers(papersData);
-  
+          console.log(papersData);
+          
+
           // Group papers by reviewers
           const groupedByReviewers = {};
           papersData.forEach((paper) => {
@@ -42,7 +45,7 @@ function Reviewerwisepapers() {
               });
             });
           });
-  
+
           setReviewers(groupedByReviewers);
           setConference_name(papersData.conferenceName);
           setData(false);
@@ -62,6 +65,20 @@ function Reviewerwisepapers() {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredReviewers = Object.entries(reviewers).filter(([reviewer]) => {
+    const reviewerName = toSentenceCase(reviewer);
+    
+    const searchQueryLowercase = searchQuery.toLowerCase();
+
+    return (
+      reviewerName.toLowerCase().includes(searchQueryLowercase) 
+    );
+  });
+
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded overflow-auto bg-slate-50">
       {/* Home Icon and Title in One Line */}
@@ -75,53 +92,64 @@ function Reviewerwisepapers() {
         <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
           <u>List of Papers Reviewer-wise</u>
         </div>
+        {/* Add search bar */}
+        <div className="absolute right-0 mr-4">
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={handleSearch}
+            placeholder="Search reviewer name"
+            className="w-64 pl-2 pr-4 py-2 border border-gray-300 rounded-md"
+          />
+        </div>
       </div>
 
       {loading ? (
-      <div className="text-2xl text-center mt-4">Loading...</div>
-    ) : empty ? (
-      <div className="text-2xl text-center mt-4">No Paper Found</div>
-    ) : (
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 text-left text-gray-900 font-medium">Reviewer Name</th>
-              <th className="px-4 py-2 text-left text-gray-900 font-medium">Papers</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {Object.entries(reviewers).map(([reviewer, papers]) => (
-              <tr key={reviewer}>
-                <td className="px-4 py-2 font-medium text-gray-600">
-                  {toSentenceCase(reviewer)}
-                </td>
-                <td>
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead>
-                      <tr>
-                        <th className="px-4 py-2 text-left text-gray-900 font-medium">Title</th>
-                        <th className="px-4 py-2 text-left text-gray-900 font-medium">Author</th>
-                        <th className="px-4 py-2 text-left text-gray-900 font-medium">Track</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {papers.map((paper, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-2 text-gray-600">{paper.title}</td>
-                          <td className="px-4 py-2 text-gray-600">{paper.author}</td>
-                          <td className="px-4 py-2 text-gray-600">{paper.track}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </td>
+        <div className="text-2xl text-center mt-4">Loading...</div>
+      ) : empty ? (
+        <div className="text-2xl text-center mt-4">No Paper Found</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+              {/* <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Reviewer ID</th> */}
+                <th className="px-4 py-2 text-left text-gray-900 font-medium">Reviewer Name</th>
+                <th className="px-4 py-2 text-left text-gray-900 font-medium">Papers</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredReviewers.map(([reviewer, papers]) => (
+                <tr key={reviewer}>
+                  <td className="px-4 py-2 font-medium text-gray-600">
+                    {toSentenceCase(reviewer || "N/A")}
+                  </td>
+                  <td>
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead>
+                        <tr>
+                          <th className="px-4 py-2 text-left text-gray-900 font-medium">Title</th>
+                          <th className="px-4 py-2 text-left text-gray-900 font-medium">Author</th>
+                          <th className="px-4 py-2 text-left text-gray-900 font-medium">Track</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {papers.map((paper, index) => (
+                          <tr key={index}>
+                            <td className="px-4 py-2 text-gray-600">{paper.title}</td>
+                            <td className="px-4 py-2 text-gray-600">{paper.author}</td>
+                            <td className="px-4 py-2 text-gray-600">{paper.track}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

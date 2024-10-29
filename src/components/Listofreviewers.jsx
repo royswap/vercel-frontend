@@ -12,6 +12,10 @@ function Listofreviewers() {
     if (conference_id) {
       report_fetchreviewers(conference_id).then((res) => {
         setData(res.data);
+        console.log(res.data);
+        console.log(conference_id);
+        
+        
       }).catch((err) => {
 
       })
@@ -48,6 +52,7 @@ function Listofreviewers() {
         <table className="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
           <thead className="ltr:text-left rtl:text-right">
             <tr>
+              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Reviewer ID</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Track</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Name</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Affiliation</th>
@@ -60,6 +65,7 @@ function Listofreviewers() {
           <tbody className="divide-y divide-gray-200">
             {data.map((item, index) => (
               <tr >
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.reviewer_id)}</td>
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.track_name)}</td>
 
                 <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{toSentenceCase(item.name)}</td>

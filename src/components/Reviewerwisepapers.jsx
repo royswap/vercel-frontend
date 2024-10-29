@@ -24,11 +24,27 @@ function Reviewerwisepapers() {
     if (conference_id) {
       fetchpaperwithreviewer(conference_id)
         .then((res) => {
-          setPapers(res.data);
-          console.log(res.data);
-          setReviewers(res.data.reviewers);
-          setConference_name(res.data.conferenceName);
-          console.log(res.data.conferenceName);
+          const papersData = res.data;
+          setPapers(papersData);
+  
+          // Group papers by reviewers
+          const groupedByReviewers = {};
+          papersData.forEach((paper) => {
+            const reviewersList = paper.reviewers.split(',').map(reviewer => reviewer.trim());
+            reviewersList.forEach((reviewer) => {
+              if (!groupedByReviewers[reviewer]) {
+                groupedByReviewers[reviewer] = [];
+              }
+              groupedByReviewers[reviewer].push({
+                title: paper.paper_title,
+                author: paper.name,
+                track: paper.track_name,
+              });
+            });
+          });
+  
+          setReviewers(groupedByReviewers);
+          setConference_name(papersData.conferenceName);
           setData(false);
         })
         .catch((err) => {
@@ -62,60 +78,50 @@ function Reviewerwisepapers() {
       </div>
 
       {loading ? (
-        <div className="text-2xl text-center mt-4">Loading...</div>
-      ) : empty ? (
-        <div className="text-2xl text-center mt-4">No Paper Found</div>
-      ) : (
-        <>
-          <div className="md:flex justify-between">
-            {/* <div className="m-2 md:m-4">
-              <h2 className="text-xl md:text-2xl text font-semibold text-black">
-                Conference Name : {toSentenceCase(conference_name)}
-              </h2>
-            </div> */}
-          </div>
-          <div className="row">
-            <div className="col-12">
-              <table className="table table-striped">
-                <thead>
-                  <tr>
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      Reviewers Name
-                    </th>
-                    {/* <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      ID
-                    </th> */}
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      Title
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                      Author
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {papers.map((paper) => (
-                    <tr key={paper._id}>
-                      <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                      {toSentenceCase(paper.reviewers)}
-                      </td>
-                      {/* <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                        {paper._id}
-                      </td> */}
-                      <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                        {paper.paper_title}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-600">
-                        {paper.name}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
+      <div className="text-2xl text-center mt-4">Loading...</div>
+    ) : empty ? (
+      <div className="text-2xl text-center mt-4">No Paper Found</div>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 text-left text-gray-900 font-medium">Reviewer Name</th>
+              <th className="px-4 py-2 text-left text-gray-900 font-medium">Papers</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {Object.entries(reviewers).map(([reviewer, papers]) => (
+              <tr key={reviewer}>
+                <td className="px-4 py-2 font-medium text-gray-600">
+                  {toSentenceCase(reviewer)}
+                </td>
+                <td>
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-2 text-left text-gray-900 font-medium">Title</th>
+                        <th className="px-4 py-2 text-left text-gray-900 font-medium">Author</th>
+                        <th className="px-4 py-2 text-left text-gray-900 font-medium">Track</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {papers.map((paper, index) => (
+                        <tr key={index}>
+                          <td className="px-4 py-2 text-gray-600">{paper.title}</td>
+                          <td className="px-4 py-2 text-gray-600">{paper.author}</td>
+                          <td className="px-4 py-2 text-gray-600">{paper.track}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
     </div>
   );
 }

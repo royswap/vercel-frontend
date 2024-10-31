@@ -14,8 +14,9 @@ function Trackwisepapers() {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
   const [empty, setEmpty] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // State for search term
 
-  const navigate = useNavigate(); // <-- Initialize navigate
+  const navigate = useNavigate(); // Initialize navigate
 
   useEffect(() => {
     const conference_id = sessionStorage.getItem("con");
@@ -32,18 +33,6 @@ function Trackwisepapers() {
       setShowPopup(true);
     }
   }, []);
-
-  // useEffect(() => {
-  //     if (selectedTrack) {
-  //         const conference_id = sessionStorage.getItem('con');
-  //         report_trackwisepaper(conference_id, selectedTrack).then((res) => {
-  //             setData(res.data);
-  //             // console.log(res.data);
-  //         }).catch((err) => {
-  //             console.error('Error fetching track-wise papers:', err);
-  //         });
-  //     }
-  // }, [selectedTrack]);
 
   const handleTrackChange = (event) => {
     setLoading(true);
@@ -76,24 +65,46 @@ function Trackwisepapers() {
   };
 
   function redirectToHome() {
-    navigate("/select-conference"); //redirection by home icon
-  };
+    navigate("/select-conference"); // Redirection by home icon
+  }
 
   const toSentenceCase = (text) => {
-    if (!text) return '';
+    if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  // Filter data based on search term
+  const filteredData = data.filter(
+    (item) =>
+      toSentenceCase(item.title).includes(toSentenceCase(searchTerm)) ||
+      toSentenceCase(item.name).includes(toSentenceCase(searchTerm))
+  );
+
   return (
-    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50">
+    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-slate-50 rounded overflow-auto">
       {/* Home Icon */}
-      <div className="w-full text-left mb-4">
+      <div className="relative flex items-center mb-4">
         <img
           src={homeIcon}
           alt="Home"
           className="cursor-pointer w-8 h-8"
           onClick={redirectToHome}
         />
+
+        <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
+          <u>Trackwise Papers</u>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="absolute right-0 mr-4">
+          <input
+            type="text"
+            placeholder="Search by Author Name or Title"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-64 pl-2 pr-4 py-2 border border-gray-300 rounded-md"
+          />
+        </div>
       </div>
 
       {showPopup && (
@@ -116,14 +127,16 @@ function Trackwisepapers() {
       <div className="mb-8">
         <label
           htmlFor="trackSelect"
-          className="block text-2xl font-medium text-gray-700"
+          className="flex text-2xl font-medium text-gray-700"
         >
-          <span className="text-2xl font-medium text-gray-700">Select Track Name:</span>
+          <span className="text-2xl font-medium text-gray-700">
+            Select Track Name:
+          </span>
           <select
             id="trackSelect"
             // value={selectedTrack}
             onChange={handleTrackChange}
-            className="mt-5 block w-half pl-10 pr-20 py-2 text-base bg-gray-200 border border-black focus:ring-blue-500 focus:border-blue-500 sm:text-m rounded-md cursor-pointer"
+            className="flex w-half pl-10 pr-20 py-2 text-base bg-gray-200 border border-black focus:ring-blue-500 focus:border-blue-500 sm:text-m rounded-md cursor-pointer"
             required
           >
             <option>Select a track</option>
@@ -140,8 +153,10 @@ function Trackwisepapers() {
         <div>Loading...</div>
       ) : empty ? (
         <div>No data...</div>
-      ) : data.length > 0 ? (
-        <div className="overflow-x-auto">
+      ) : filteredData.length > 0 ? (
+        <div className="overflow-y-auto" style={{ maxHeight: "400px" }}>
+          {" "}
+          {/* Set max height for vertical scrolling */}
           <table className="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
             <thead className="ltr:text-left rtl:text-right">
               <tr>
@@ -190,7 +205,7 @@ function Trackwisepapers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {data.map((item, index) => (
+              {filteredData.map((item, index) => (
                 <tr key={index}>
                   <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
                     {toSentenceCase(item.title)}

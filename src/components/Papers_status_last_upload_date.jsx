@@ -5,7 +5,9 @@ import homeIcon from "../assets/home36.png";
 
 function Papers_status_last_upload_date() {
   const [data, setData] = useState([]);
-  const navigate = useNavigate(); // <-- Initialize navigate
+  const [searchTerm, setSearchTerm] = useState(""); // State for search term
+  const navigate = useNavigate(); // Initialize navigate
+
   useEffect(() => {
     const conference_id = sessionStorage.getItem("con");
     if (conference_id) {
@@ -13,12 +15,14 @@ function Papers_status_last_upload_date() {
         .then((res) => {
           setData(res.data);
         })
-        .catch((err) => {});
+        .catch((err) => {
+          console.error("Error fetching paper status:", err);
+        });
     }
   }, []);
 
   const redirectToHome = () => {
-    navigate("/select-conference"); // <-- This will navigate to the select-conference page
+    navigate("/select-conference"); // This will navigate to the select-conference page
   };
 
   const toSentenceCase = (text) => {
@@ -26,19 +30,42 @@ function Papers_status_last_upload_date() {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  // Filter data based on search term
+  const filteredData = data.filter(
+    (item) =>
+      toSentenceCase(item.name).includes(toSentenceCase(searchTerm)) ||
+      toSentenceCase(item.paper_title).includes(toSentenceCase(searchTerm))
+  );
+
   return (
-    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50">
+    <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-slate-50 rounded overflow-auto">
       {/* Home Icon */}
-      <div className="w-full text-left mb-4">
+      <div className="relative flex items-center mb-4">
         <img
           src={homeIcon}
           alt="Home"
           className="cursor-pointer w-8 h-8"
-          onClick={redirectToHome} // <-- Add this onClick handler
+          onClick={redirectToHome} // Add this onClick handler
         />
+        <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
+          <u>Paper Status</u>
+        </div>
+
+        {/* Search Bar */}
+        <div className="absolute right-0 mr-4">
+          <input
+            type="text"
+            placeholder="Search by Author Name or Title"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-64 pl-2 pr-4 py-2 border border-gray-300 rounded-md"
+          />
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-y-auto" style={{ maxHeight: "400px" }}>
+        {" "}
+        {/* Set max height for vertical scrolling */}
         <table className="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
           <thead className="ltr:text-left rtl:text-right">
             <tr>
@@ -73,9 +100,9 @@ function Papers_status_last_upload_date() {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {data.map((item, index) => (
-              <tr>
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+            {filteredData.map((item, index) => (
+              <tr key={index}>
+                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray- 900">
                   {toSentenceCase(item.track_name)}
                 </td>
 

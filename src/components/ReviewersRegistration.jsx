@@ -29,6 +29,7 @@ function ReviewersRegistration() {
   const [selectedTrackName, setSelectedTrackName] = useState("");
   const [existingreviewers, setExistingreviewers] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedTracks, setSelectedTracks] = useState([]);
 
   const [data, SetData] = useState(true);
 
@@ -71,7 +72,7 @@ function ReviewersRegistration() {
     //   setIsEditing(false); // Reset after editing
     // } else {
     //   // Add new reviewer
-     
+
     // }
 
     // Clear form data
@@ -126,11 +127,12 @@ function ReviewersRegistration() {
         country: item.country,
         mobile: item.mobile,
         email: item.email,
+        tracks: selectedTracks
       })),
     };
     console.log(selectedTrack.id);
+    console.log(selectedTracks); 
     console.log(transformedData);
-    
 
     createReviewers(transformedData, selectedTrack.id)
       .then((Response) => {
@@ -154,8 +156,6 @@ function ReviewersRegistration() {
 
         // Clear the reviewers state (form data)
         setReviewers([]);
-
-        // Show success popup
         handleSuccess();
 
         console.log("Reviewers added successfully:", Response.data);
@@ -181,13 +181,13 @@ function ReviewersRegistration() {
     console.log(formData);
     // console.log(members._id);
     // Update the reviewers state with the edited data
-  setReviewers(
-    reviewers.map((reviewer) =>
-      reviewer.email === email ? { ...reviewer, ...formData } : reviewer
-    )
-  );
-  setIsEditing(false); // Reset after editing
-  }
+    setReviewers(
+      reviewers.map((reviewer) =>
+        reviewer.email === email ? { ...reviewer, ...formData } : reviewer
+      )
+    );
+    setIsEditing(false); // Reset after editing
+  };
 
   const handleRedirect = () => {
     // history.push('/another-page'); // Change '/another-page' to the actual path you want to redirect to
@@ -250,16 +250,28 @@ function ReviewersRegistration() {
   };
 
   const handleRowClick2 = (member) => {
-  if (selectedRows.includes(member._id)) {
-    setSelectedRows(selectedRows.filter((id) => id !== member._id));
-  } else {
-    setSelectedRows([...selectedRows, member._id]);
-  }
-};
+    if (selectedRows.includes(member._id)) {
+      setSelectedRows(selectedRows.filter((id) => id !== member._id));
+    } else {
+      setSelectedRows([...selectedRows, member._id]);
+    }
+  };
 
   const deleteEach = (email) => {
     setReviewers(reviewers.filter((member) => member.email !== email));
     //console.log(email);
+  };
+
+  const handleTrackSelect = (e) => {
+    const { value, checked } = e.target;
+
+    if (checked) {
+      setSelectedTracks((prevSelected) => [...prevSelected, value]);
+    } else {
+      setSelectedTracks((prevSelected) =>
+        prevSelected.filter((id) => id !== value)
+      );
+    }
   };
 
   const redirectToHome = () => {
@@ -431,7 +443,6 @@ function ReviewersRegistration() {
                   >
                     <span className="text-xs font-medium text-gray-700">
                       Mobile
-                       
                     </span>
                     <input
                       type="text"
@@ -489,9 +500,31 @@ function ReviewersRegistration() {
                   </label>
                 </div>
               </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold">
+                  Select Tracks for Reviewers:
+                </h3>
+                <div className="flex flex-wrap space-x-4 mt-2">
+                  {tracks.map((track) => (
+                    <div key={track._id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={track._id}
+                        value={track._id}
+                        checked={selectedTracks.includes(track._id)}
+                        onChange={handleTrackSelect}
+                        className="mr-2"
+                      />
+                      <label htmlFor={track._id} className="text-gray-700">
+                        {toSentenceCase(track.track_name)}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className="flex items-center justify-center mt-3">
-              {isEditing ? (
+                {isEditing ? (
                   <button
                     className="inline-block rounded border border-indigo-600 bg-slate-300 px-7 py-2 text-sm font-medium text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     type="button"
@@ -541,7 +574,10 @@ function ReviewersRegistration() {
                     {oldmembers.map((member) => (
                       <tr
                         key={member.id}
-                        onClick={() => {handleRowClick(member); handleRowClick2(member);}}
+                        onClick={() => {
+                          handleRowClick(member);
+                          handleRowClick2(member);
+                        }}
                         className={`cursor-pointer ${
                           selectedRows.includes(member._id) ? "bg-gray-200" : ""
                         }`}

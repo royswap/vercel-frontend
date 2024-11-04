@@ -20,6 +20,8 @@ function ReviewInvitation() {
       getalltracks(conference_id)
         .then((res) => {
           setTracks(res.data.tracks);
+          console.log(res.data.tracks);
+          
         })
         .catch((err) => {
           // Handle error
@@ -33,7 +35,7 @@ function ReviewInvitation() {
       trackId,
       date,
       name,
-      designation,
+      // designation,
     };
     console.log(formData);
     emailsend(trackId,date,name,designation).then((res)=>{
@@ -103,9 +105,29 @@ function ReviewInvitation() {
               />
             </label>
           </div>
+          
+          {/* <div className="flex-1 m-2">
+              <label
+                htmlFor="name"
+                className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+              >
+                <span className="text-xs font-medium text-gray-700">Name</span>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </label>
+            </div> */}
+
           <div className='m-4'>
-            Thank you for your willingness to serve as a reviewer. Peer review is one of the most important activities of our Society, and your help is appreciated. Written comments are usually the most helpful part of a review. Please provide comments on the second page or on separate sheets. The grading section below is intended to help identify key points for written comments, and also to allow comparisons among different reviewers. A good paper should have a high overall score, but does not have to score well in all aspects to be acceptable. For example, a concise, critical review paper is a valuable publication, although it might have little intrinsic originality. A paper that introduces important new concepts might be valuable even with limited experimental work. <br /> <br />Regards
+            Thank you for your willingness to serve as a reviewer. Peer review is one of the most important activities of our Society, and your help is appreciated. Written comments are usually the most helpful part of a review. Please provide comments on the second page or on separate sheets. The grading section below is intended to help identify key points for written comments, and also to allow comparisons among different reviewers. A good paper should have a high overall score, but does not have to score well in all aspects to be acceptable. For example, a concise, critical review paper is a valuable publication, although it might have little intrinsic originality. A paper that introduces important new concepts might be valuable even with limited experimental work. <br /> <br /> Regards
           </div>
+
           <div className="flex gap-4 m-2">
             <div className="flex-1 m-2">
               <label
@@ -124,7 +146,7 @@ function ReviewInvitation() {
                 />
               </label>
             </div>
-            <div className="flex-1 m-2">
+            {/* <div className="flex-1 m-2">
               <label
                 htmlFor="designation"
                 className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
@@ -140,7 +162,7 @@ function ReviewInvitation() {
                   onChange={(e) => setDesignation(e.target.value)}
                 />
               </label>
-            </div>
+            </div> */}
           </div>
 
           <div className='flex items-center justify-center'>

@@ -38,10 +38,10 @@ function ReviewersRegistration() {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!selectedTrack.id) {
-      alert("select track first");
-      return;
-    }
+    // if (!selectedTrack.id) {
+    //   alert("select track first");
+    //   return;
+    // }
     const formData = {
       name,
       email,
@@ -116,10 +116,10 @@ function ReviewersRegistration() {
   };
 
   const finalsave = () => {
-    if (!selectedTrack.id) {
-      alert("select track first");
-      return;
-    }
+    // if (!selectedTrack.id) {
+    //   alert("select track first");
+    //   return;
+    // }
     const transformedData = {
       reviewers: reviewers.map((item) => ({
         name: item.name,
@@ -130,8 +130,8 @@ function ReviewersRegistration() {
         tracks: selectedTracks
       })),
     };
-    console.log(selectedTrack.id);
-    console.log(selectedTracks); 
+    // console.log(selectedTrack.id);
+    // console.log(selectedTracks); 
     console.log(transformedData);
 
     createReviewers(transformedData, selectedTrack.id)
@@ -165,7 +165,7 @@ function ReviewersRegistration() {
           alert(err.response.data.errors[0].error);
         }
       });
-  };
+   };
 
   const finalEdit = () => {
     const formData = {

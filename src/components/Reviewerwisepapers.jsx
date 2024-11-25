@@ -6,7 +6,12 @@ import {
 } from "../services/ConferenceServices";
 import { createReviewers } from "../services/ConferenceServices";
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
 import homeIcon from "../assets/home36.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileExcel, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 function Reviewerwisepapers() {
   const [reviewers, setReviewers] = useState([]);
@@ -79,6 +84,44 @@ function Reviewerwisepapers() {
     );
   });
 
+  // Export to Excel
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      filteredReviewers.map(([reviewer, papers]) => ({
+        "Reviewer Name": toSentenceCase(reviewer),
+        "Papers": papers.map(paper => paper.title).join(", "),
+        "Author": papers.map(paper => paper.author).join(", "),
+        "Track": papers.map(paper => paper.track).join(", "),
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reviewerwise Papers");
+    XLSX.writeFile(workbook, "Reviewerwise_Papers_Report.xlsx");
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Reviewerwise Papers Report", 14, 10);
+
+    const tableColumn = ["Reviewer Name", "Papers", "Author", "Track"];
+    const tableRows = filteredReviewers.map(([reviewer, papers,]) => [
+      toSentenceCase(reviewer),
+      papers.map(paper => paper.title).join(", "),
+      papers.map(paper => paper.author).join(", "),
+      papers.map(paper => paper.track).join(", "),
+
+    ]);
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+    });
+
+    doc.save("Reviewerwise_Papers_Report.pdf");
+  };
+
+
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded overflow-auto bg-slate-50">
       {/* Home Icon and Title in One Line */}
@@ -102,6 +145,24 @@ function Reviewerwisepapers() {
             className="w-64 pl-2 pr-4 py-2 border border-gray-300 rounded-md"
           />
         </div>
+      </div>
+
+      {/* Export Buttons */}
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={exportToExcel}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
+          Export to Excel
+        </button>
+        <button
+          onClick={exportToPDF}
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+          Export to PDF
+        </button>
       </div>
 
       {loading ? (

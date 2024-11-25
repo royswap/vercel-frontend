@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { report_fetchreviewers } from '../services/ConferenceServices';
 import { useNavigate } from 'react-router-dom';
-import homeIcon from '../assets/home36.png';
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
+import homeIcon from "../assets/home36.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileExcel, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 function Listofreviewers() {
   const [data, setData] = useState([]);
@@ -36,6 +41,45 @@ function Listofreviewers() {
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Export to Excel
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      data.map(item => ({
+        "Reviewer ID": toSentenceCase(item.reviewer_id),
+        Track: toSentenceCase(item.track_name),
+        Name: toSentenceCase(item.name),
+        Affiliation: toSentenceCase(item.affiliation),
+        Country: toSentenceCase(item.country),
+        Email: item.email,
+        Mobile: item.mobile
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "List of Reviewers");
+    XLSX.writeFile(workbook, "List_of_Reviewers_Report.xlsx");
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("List of Reviewers", 14, 10);
+    doc.autoTable({
+      head: [
+        ["Reviewer ID", "Track", "Name", "Affiliation", "Country", "Email", "Mobile"]
+      ],
+      body: data.map(item => [
+        toSentenceCase(item.reviewer_id),
+        toSentenceCase(item.track_name),
+        toSentenceCase(item.name),
+        toSentenceCase(item.affiliation),
+        toSentenceCase(item.country),
+        item.email,
+        item.mobile
+      ])
+    });
+    doc.save("List_of_Reviewers_Report.pdf");
+  }
+
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-slate-50 rounded overflow-auto">
       {/* Home Icon */}
@@ -59,6 +103,24 @@ function Listofreviewers() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+      </div>
+
+      {/* Export Buttons */}
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={exportToExcel}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
+          Export to Excel
+        </button>
+        <button
+          onClick={exportToPDF}
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+          Export to PDF
+        </button>
       </div>
 
       {/* Table with horizontal scroll */}

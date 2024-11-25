@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { report_authorwisepaper } from '../services/ConferenceServices';
 import { useNavigate } from 'react-router-dom';
-import homeIcon from '../assets/home36.png';
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
+import homeIcon from "../assets/home36.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileExcel, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 function Papercopyright() {
   const [data, setData] = useState([]);
@@ -37,6 +42,41 @@ function Papercopyright() {
     toSentenceCase(item.paper_title).includes(toSentenceCase(searchTerm))
   );
 
+  // Export to Excel
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      data.map(item => ({
+        Title: toSentenceCase(item.paper_title),
+        'Track Name': toSentenceCase(item.track_name),
+        'First Author': toSentenceCase(item.first_author),
+        'First Author Email': item.first_author_email,
+        'First Author Country': toSentenceCase(item.first_author_country),
+        'Co-authors': toSentenceCase(item.co_authors),
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Papers Copy Right Information');
+    XLSX.writeFile(workbook, 'Papers_Copyright_Information.xlsx');
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Paper Copyright Report", 14, 10);
+    doc.autoTable({
+      head: [['Title', 'Track Name', 'First Author', 'First Author Email', 'First Author Country', 'Co-authors']],
+      body: data.map(item => [
+        toSentenceCase(item.paper_title),
+        toSentenceCase(item.track_name),
+        toSentenceCase(item.first_author),
+        item.first_author_email,
+        toSentenceCase(item.first_author_country),
+        toSentenceCase(item.co_authors),
+      ]),
+    });
+    doc.save('Papers_Copyright_Information.pdf');
+  }
+
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
       {/* Home Icon */}
@@ -63,6 +103,24 @@ function Papercopyright() {
             className="border border-gray-300 rounded p-2"
           />
         </div>
+      </div>
+
+      {/* Export Buttons */}
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={exportToExcel}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
+          Export to Excel
+        </button>
+        <button
+          onClick={exportToPDF}
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+          Export to PDF
+        </button>
       </div>
 
       <div className="overflow-x-auto" style={{ maxHeight: '400px', overflowY: 'auto' }}> {/* Set max height for vertical scrolling */}

@@ -5,7 +5,12 @@ import {
   getTrackWisePaper,
 } from "../services/ConferenceServices";
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
 import homeIcon from "../assets/home36.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileExcel, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 function Trackwisepapers() {
   const [data, setData] = useState([]);
@@ -80,6 +85,57 @@ function Trackwisepapers() {
       toSentenceCase(item.name).includes(toSentenceCase(searchTerm))
   );
 
+  // Export to Excel
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      data.map((item) => ({
+        Title: toSentenceCase(item.title),
+        "First Author": toSentenceCase(item.name),
+        "First Author Email": item.email,
+        "First Author Country": toSentenceCase(item.country),
+        "Co-authors": toSentenceCase(item.co_authors),
+        "Copy right form submitted": item.copy_right_form_submitted,
+        "Copy right form, question or upload": item.copy_right_form_question_or_upload,
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Trackwise List of Papers");
+    XLSX.writeFile(workbook, "Trackwise_Papers_Report.xlsx");
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Trackwise Papers Report", 14, 10);
+
+    const tableColumn = [
+      "Title",
+      "First Author",
+      "First Author Email",
+      "First Author Country",
+      "Co-authors",
+      "Copy right form submitted",
+      "Copy right form, question or upload",
+    ];
+    const tableRows = data.map((item) => [
+      toSentenceCase(item.title),
+      toSentenceCase(item.name),
+      item.email,
+      toSentenceCase(item.country),
+      toSentenceCase(item.co_authors),
+      item.copy_right_form_submitted,
+      item.copy_right_form_question_or_upload,
+    ]);
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+    });
+
+    doc.save("Trackwise_Papers_Report.pdf");
+  };
+
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-slate-50 rounded overflow-auto">
       {/* Home Icon */}
@@ -147,6 +203,24 @@ function Trackwisepapers() {
             ))}
           </select>
         </label>
+      </div>
+
+      {/* Export Buttons */}
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={exportToExcel}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
+          Export to Excel
+        </button>
+        <button
+          onClick={exportToPDF}
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+          Export to PDF
+        </button>
       </div>
 
       {loading ? (

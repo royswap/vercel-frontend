@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { getallmembersoftpcbyconid } from '../services/ConferenceServices';
 import { useNavigate } from 'react-router-dom';
-import homeIcon from '../assets/home36.png';
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
+import homeIcon from "../assets/home36.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileExcel, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 function Tpcmembers() {
   const [members, setMembers] = useState([]);
@@ -36,6 +41,35 @@ function Tpcmembers() {
     member.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Export to Excel
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      members.map((member) => ({
+        Name: toSentenceCase(member.name),
+        Email: member.email,
+        Mobile: member.mobile,
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'TPC Members');
+    XLSX.writeFile(workbook, 'TPC_Members_Report.xlsx');
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text('TPC Members Report', 14, 10, { align: 'center' });
+    doc.autoTable({
+      head: [['Name', 'Email', 'Mobile']],
+      body: members.map((member) => [
+        toSentenceCase(member.name),
+        member.email,
+        member.mobile,
+      ]),
+    });
+    doc.save('TPC_Members_Report.pdf');
+  }
+
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50'>
       {/* Home Icon */}
@@ -46,7 +80,6 @@ function Tpcmembers() {
           className="cursor-pointer w-8 h-8"
           onClick={redirectToHome}
         />
-      
 
       <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
           <u>TPC Members</u>
@@ -60,6 +93,24 @@ function Tpcmembers() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+      </div>
+
+      {/* Export Buttons */}
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={exportToExcel}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
+          Export to Excel
+        </button>
+        <button
+          onClick={exportToPDF}
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+          Export to PDF
+        </button>
       </div>
 
       <div className="overflow-x-auto">

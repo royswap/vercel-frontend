@@ -3,7 +3,7 @@ import {
   createAuthorWork,
   fetchauthorwork,
   withdrawPaper,
-  editAuthor
+  editAuthor,
 } from "../services/ConferenceServices";
 import { useLoaderData } from "react-router-dom";
 import { getAllConference } from "../services/ConferenceServices";
@@ -127,7 +127,7 @@ const AuthorRegistration = () => {
       affiliation: coAuthor.affiliation,
       country: coAuthor.country,
       contact_no: coAuthor.mobile,
-      email: coAuthor .email,
+      email: coAuthor.email,
       isCorrespondingAuthor: coAuthor.isCorresponding,
     }));
 
@@ -147,7 +147,7 @@ const AuthorRegistration = () => {
     };
 
     setLoading(true);
-    createAuthorWork(authorWorkData, selectedTrackId, conference._id, pdfFile )
+    createAuthorWork(authorWorkData, selectedTrackId, conference._id, pdfFile)
       .then((Response) => {
         // setCompletionMessage(Response.data.message);
         console.log(Response.data);
@@ -161,7 +161,7 @@ const AuthorRegistration = () => {
         console.log(err);
       });
     setLoading(false);
-    
+
     console.log(authorWorkData);
   };
 
@@ -261,7 +261,7 @@ const AuthorRegistration = () => {
         // setLoading(false);
         alert("Paper withdrawn successfully.");
       })
-      .catch(( error) => {
+      .catch((error) => {
         console.error("Error withdrawing paper:", error);
         setLoading(false);
         alert("An error occurred while withdrawing the paper.");
@@ -298,7 +298,7 @@ const AuthorRegistration = () => {
     // console.log("Changed Data:", selectedTrackId); // Add this line
     // console.log("Changed Data:", conference); // Add this line
 
-    editAuthor(JSON.stringify(authorWorkData), paperID, pdfFile )
+    editAuthor(JSON.stringify(authorWorkData), paperID, pdfFile)
       .then((res) => {
         alert("Paper details updated successfully.");
         console.log(res.data);
@@ -309,7 +309,6 @@ const AuthorRegistration = () => {
         alert("An error occurred while updating paper details.");
       });
     // console.log(pdfFile);
-    
   };
 
   const handleEditToggle = () => {
@@ -400,13 +399,18 @@ const AuthorRegistration = () => {
                         : "Select Conference"}
                     </option>
                     {conferenceList.map((conferenceItem) => (
-                      <option key={conferenceItem._id} value={conferenceItem._id}>
+                      <option
+                        key={conferenceItem._id}
+                        value={conferenceItem._id}
+                      >
                         {toSentenceCase(conferenceItem.conference_title)}
                       </option>
                     ))}
                   </select>
                   {errors.track && (
-                    <p className="text-red-500 text-xs italic">{errors .track}</p>
+                    <p className="text-red-500 text-xs italic">
+                      {errors.track}
+                    </p>
                   )}
                 </div>
 
@@ -445,9 +449,7 @@ const AuthorRegistration = () => {
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.affiliation ? "border-red-500" : ""
                     }`}
-                    value={toSentenceCase(
-                      affiliation
-                    )}
+                    value={toSentenceCase(affiliation)}
                     onChange={(e) => setAffiliation(e.target.value)}
                   ></textarea>
                   {errors.affiliation && (
@@ -502,7 +504,9 @@ const AuthorRegistration = () => {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                   {errors.email && (
-                    <p className="text-red-500 text-xs italic">{errors.email}</p>
+                    <p className="text-red-500 text-xs italic">
+                      {errors.email}
+                    </p>
                   )}
                 </div>
                 {/* Google Scholar ID */}
@@ -540,7 +544,9 @@ const AuthorRegistration = () => {
                     onChange={(e) => setTitle(e.target.value)}
                   ></textarea>
                   {errors.title && (
-                    <p className="text-red-500 text-xs italic">{errors.title}</p >
+                    <p className="text-red-500 text-xs italic">
+                      {errors.title}
+                    </p>
                   )}
                 </div>
                 {/* Track */}
@@ -565,7 +571,9 @@ const AuthorRegistration = () => {
                     ))}
                   </select>
                   {errors.track && (
-                    <p className="text-red-500 text-xs italic">{errors.track}</p>
+                    <p className="text-red-500 text-xs italic">
+                      {errors.track}
+                    </p>
                   )}
                 </div>
                 {/* Topic */}
@@ -650,14 +658,21 @@ const AuthorRegistration = () => {
                   <label className="block text-gray-700">Co-Authors:</label>
                   {paperDetails.co_authors
                     ? paperDetails.co_authors.map((coAuthor, index) => (
-                        <div key={index} className="flex space-x-4 items-center">
+                        <div
+                          key={index}
+                          className="flex space-x-4 items-center"
+                        >
                           <input
                             type="text"
                             className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Name"
                             value={toSentenceCase(coAuthor.name)}
                             onChange={(e) =>
-                              handleCoAuthorChange(index, "name", e.target.value)
+                              handleCoAuthorChange(
+                                index,
+                                "name",
+                                e.target.value
+                              )
                             }
                           />
                           <input
@@ -666,7 +681,11 @@ const AuthorRegistration = () => {
                             placeholder="Email"
                             value={coAuthor.email}
                             onChange={(e) =>
-                              handleCoAuthorChange(index, "email", e.target.value)
+                              handleCoAuthorChange(
+                                index,
+                                "email",
+                                e.target.value
+                              )
                             }
                           />
                           <input
@@ -828,7 +847,6 @@ const AuthorRegistration = () => {
                     disabled={loading}
                   >
                     Save Changes
-                    
                   </button>
                   <button
                     type="button"
@@ -852,8 +870,13 @@ const AuthorRegistration = () => {
                   />
                   <button
                     type="button"
-                    className="ml-2 border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500 rounded"
+                    className={`ml-2 px-7 py-2 text-sm font-medium rounded ${
+                      paperID
+                        ? "border border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700"
+                        : "border border-gray-400 bg-gray-400 text-gray-700 cursor-not-allowed"
+                    }`}
                     onClick={handleGoButtonClick}
+                    disabled={!paperID} // Disable button if paperID is empty
                   >
                     Go
                   </button>
@@ -874,13 +897,18 @@ const AuthorRegistration = () => {
                         : "Select Conference"}
                     </option>
                     {conferenceList.map((conferenceItem) => (
-                      <option key={conferenceItem._id} value={conferenceItem._id}>
+                      <option
+                        key={conferenceItem._id}
+                        value={conferenceItem._id}
+                      >
                         {toSentenceCase(conferenceItem.conference_title)}
                       </option>
                     ))}
                   </select>
                   {errors.track && (
-                    <p className="text-red-500 text-xs italic">{errors.track}</p>
+                    <p className="text-red-500 text-xs italic">
+                      {errors.track}
+                    </p>
                   )}
                 </div>
 
@@ -919,9 +947,7 @@ const AuthorRegistration = () => {
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.affiliation ? "border-red-500" : ""
                     }`}
-                    value={
-                      affiliation
-                    }
+                    value={affiliation}
                     onChange={(e) => setAffiliation(e.target.value)}
                   ></textarea>
                   {errors.affiliation && (
@@ -976,7 +1002,9 @@ const AuthorRegistration = () => {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                   {errors.email && (
-                    <p className="text-red-500 text-xs italic">{errors.email}</p>
+                    <p className="text-red-500 text-xs italic">
+                      {errors.email}
+                    </p>
                   )}
                 </div>
                 {/* Google Scholar ID */}
@@ -1014,7 +1042,9 @@ const AuthorRegistration = () => {
                     onChange={(e) => setTitle(e.target.value)}
                   ></textarea>
                   {errors.title && (
-                    <p className="text-red-500 text-xs italic">{errors.title}</p>
+                    <p className="text-red-500 text-xs italic">
+                      {errors.title}
+                    </p>
                   )}
                 </div>
                 {/* Track */}
@@ -1039,7 +1069,9 @@ const AuthorRegistration = () => {
                     ))}
                   </select>
                   {errors.track && (
-                    <p className="text-red-500 text-xs italic">{errors.track}</p>
+                    <p className="text-red-500 text-xs italic">
+                      {errors.track}
+                    </p>
                   )}
                 </div>
                 {/* Topic */}
@@ -1097,7 +1129,7 @@ const AuthorRegistration = () => {
                   {paperDetails.pdfLink && (
                     <div className="mb-2">
                       <a
-                        href ={paperDetails.pdfLink}
+                        href={paperDetails.pdfLink}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-500 hover:underline"
@@ -1124,14 +1156,21 @@ const AuthorRegistration = () => {
                   <label className="block text-gray-700">Co-Authors:</label>
                   {paperDetails.co_authors
                     ? paperDetails.co_authors.map((coAuthor, index) => (
-                        <div key={index} className="flex space-x-4 items-center">
+                        <div
+                          key={index}
+                          className="flex space-x-4 items-center"
+                        >
                           <input
                             type="text"
                             className="form-input mt-1 block w-1/ 2 border border-gray-300"
                             placeholder="Name"
                             value={coAuthor.name}
                             onChange={(e) =>
-                              handleCoAuthorChange(index, "name", e.target.value)
+                              handleCoAuthorChange(
+                                index,
+                                "name",
+                                e.target.value
+                              )
                             }
                           />
                           <input
@@ -1140,7 +1179,11 @@ const AuthorRegistration = () => {
                             placeholder="Email"
                             value={coAuthor.email}
                             onChange={(e) =>
-                              handleCoAuthorChange(index, "email", e.target.value)
+                              handleCoAuthorChange(
+                                index,
+                                "email",
+                                e.target.value
+                              )
                             }
                           />
                           <input
@@ -1264,7 +1307,7 @@ const AuthorRegistration = () => {
                                 type="checkbox"
                                 className="form-checkbox"
                                 checked={coAuthor.isCorresponding}
- onChange={(e) =>
+                                onChange={(e) =>
                                   handleCoAuthorChange(
                                     index,
                                     "isCorresponding",
@@ -1303,13 +1346,15 @@ const AuthorRegistration = () => {
                   >
                     {loading ? "Submit" : "Submit"}
                   </button>
-                  <button
-                    type="button"
-                    className="border border-indigo-600 bg-indigo-600 px-5 py-2 text-sm font-medium rounded bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-                    onClick={handleWithdrawButtonClick}
-                  >
-                    Withdraw Paper
-                  </button>
+                  {paperID && (
+                    <button
+                      type="button"
+                      className="border border-indigo-600 bg-indigo-600 px-5 py-2 text-sm font-medium rounded bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                      onClick={handleWithdrawButtonClick}
+                    >
+                      Withdraw Paper
+                    </button>
+                  )}
                 </div>
               </form>
             )}

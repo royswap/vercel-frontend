@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { fetchpaperwithreviewer } from "../services/ConferenceServices";
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
 import homeIcon from "../assets/home36.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileExcel, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 function Papers_with_reviewers() {
   const [papers, setPapers] = useState([]);
@@ -33,6 +38,41 @@ function Papers_with_reviewers() {
     );
   });
 
+  // Export to Excel
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      papers.map((paper) => ({
+        Track: toSentenceCase(paper.track_name),
+        Title: toSentenceCase(paper.paper_title),
+        "First Author": toSentenceCase(paper.name),
+        "Co-Authors": toSentenceCase(paper.co_authors),
+        Reviewers: toSentenceCase(paper.reviewers),
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Papers with Reviewers");
+    XLSX.writeFile(workbook, "Papers_with_Reviewers_Report.xlsx");
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("List of Papers with Reviewers", 14, 10);
+    doc.autoTable({
+      head: [
+        ["Track", "Title", "First Author", "Co-Authors", "Reviewers"],
+      ],
+      body: papers.map((paper) => [
+        toSentenceCase(paper.track_name),
+        toSentenceCase(paper.paper_title),
+        toSentenceCase(paper.name),
+        toSentenceCase(paper.co_authors),
+        toSentenceCase(paper.reviewers),
+      ]),
+    });
+    doc.save("Papers_with_Reviewers_Report.pdf");
+  };
+
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-slate-50 rounded overflow-auto">
       {/* Home Icon */}
@@ -59,6 +99,24 @@ function Papers_with_reviewers() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+      </div>
+
+      {/* Export Buttons */}
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={exportToExcel}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
+          Export to Excel
+        </button>
+        <button
+          onClick={exportToPDF}
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+          Export to PDF
+        </button>
       </div>
 
       <div className="overflow-x-auto">

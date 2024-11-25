@@ -6,6 +6,8 @@ function ConferenceCreation() {
   const [conference_title, setConference_Title] = useState("");
   const [shortName, setShortName] = useState("");
   const [website, setWebsite] = useState("");
+  const [plagiarismWebsite, setPlagiarismWebsite] = useState("");
+  const [copyrightWebsite, setCopyrightWebsite] = useState("");
   const [venue, setVenue] = useState("");
   const [address, setAddress] = useState("");
   const [place, setPlace] = useState("");
@@ -27,6 +29,8 @@ function ConferenceCreation() {
       conference_title,
       shortName,
       website,
+      plagiarismWebsite,
+      copyrightWebsite,
       venue,
       address,
       place,
@@ -58,6 +62,8 @@ function ConferenceCreation() {
     setConference_Title("");
     setShortName("");
     setWebsite("");
+    setPlagiarismWebsite("");
+    setCopyrightWebsite("");
     setVenue("");
     setAddress("");
     setPlace("");
@@ -250,6 +256,7 @@ function ConferenceCreation() {
                   name="from_date"
                   value={from_date}
                   onChange={(e) => setfrom_date(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]} // Disable past dates
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                   required
                 />
@@ -269,6 +276,7 @@ function ConferenceCreation() {
                   name="to_date"
                   value={to_date}
                   onChange={(e) => setto_date(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]} // Disable past dates
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                   required
                 />
@@ -288,6 +296,7 @@ function ConferenceCreation() {
                   name="date_of_call_for_paper"
                   value={date_of_call_for_paper}
                   onChange={(e) => setdate_of_call_for_paper(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]} // Disable past dates
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                   required
                 />
@@ -308,12 +317,60 @@ function ConferenceCreation() {
                   name="last_date_paper_sub"
                   value={last_date_paper_sub}
                   onChange={(e) => setlast_date_paper_sub(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]} // Disable past dates
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                   required
                 />
               </label>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Plagiarism Website */}
+            <div>
+              <label
+                htmlFor="plagiarism_website"
+                className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+              >
+                <span className="text-xs font-medium text-gray-700">
+                  Plagiarism Website
+                </span>
+                <input
+                  type="url"
+                  id="plagiarism_website"
+                  name="plagiarism_website"
+                  value={plagiarismWebsite}
+                  onChange={(e) => setPlagiarismWebsite(e.target.value)}
+                  className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
+                  placeholder=""
+                  required
+                />
+              </label>
+            </div>
+
+            {/* Copyright Website */}
+            <div>
+              <label
+                htmlFor="copyright_website"
+                className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+              >
+                <span className="text-xs font-medium text-gray-700">
+                  Copyright Website
+                </span>
+                <input
+                  type="url"
+                  id="copyright_website"
+                  name="copyright_website"
+                  value={copyrightWebsite}
+                  onChange={(e) => setCopyrightWebsite(e.target.value)}
+                  className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
+                  placeholder=""
+                  required
+                />
+              </label>
+            </div>
+          </div>
+
           <div className="flex flex-wrap justify-between">
             <label
               htmlFor="number_of_papers"
@@ -344,6 +401,7 @@ function ConferenceCreation() {
               </select>
             </label>
           </div>
+
           {loading && (
             <div className="flex justify-center items-center">
               <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 border-solid"></div>

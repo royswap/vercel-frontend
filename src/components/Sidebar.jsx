@@ -21,6 +21,7 @@ const Sidebar = () => {
   }, []);
 
   const Menus = [
+    { title: "Subscriber Registration", src: "Home", path: "/subscriber-registration" },
     {
       title: "Create Conference",
       src: "Chart_fill",
@@ -40,8 +41,8 @@ const Sidebar = () => {
         { title: "Author Registration", path: "/authors-registration" },
       ],
     },
-    { title: "Reviewer Invitation", path: "/reviewer-invitation" },
     { title: "Allot Paper", src: "Calendar", path: "/allot-paper" },
+    { title: "Reviewer Invitation", path: "/reviewer-invitation" },
     { title: "Review Format", src: "Search", path: "/review-format" },
     {
       title: "Report",

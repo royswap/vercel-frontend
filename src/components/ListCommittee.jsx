@@ -6,7 +6,12 @@ import {
   editCommittee,
 } from "../services/ConferenceServices";
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
 import homeIcon from "../assets/home36.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileExcel, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 function ListCommittee() {
   const [committees, setCommittees] = useState([]); // Create a state variable to hold the list of committees
@@ -101,6 +106,30 @@ function ListCommittee() {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  // Export to Excel
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      committees.map((item) => ({
+        Committee: toSentenceCase(item.committee_name),
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Committees");
+    XLSX.writeFile(workbook, "Committees_Report.xlsx");
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Committees Report", 14, 10);
+
+    const tableColumn = ["Committee"];
+    const tableRows = committees.map((item) => [toSentenceCase(item.committee_name)]);
+
+    doc.autoTable(tableColumn, tableRows, { startY: 20 });
+    doc.save("Committees_Report.pdf");
+  }
+
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 mt-2 mb-5 bg-body-tertiary rounded bg-slate-50">
       {/* Home Icon and Title */}
@@ -112,6 +141,24 @@ function ListCommittee() {
           onClick={redirectToHome}
         />
         <u>List of Committees</u>
+      </div>
+
+      {/* Export Buttons */}
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={exportToExcel}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
+          Export to Excel
+        </button>
+        <button
+          onClick={exportToPDF}
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+          Export to PDF
+        </button>
       </div>
 
       {showPopup && (

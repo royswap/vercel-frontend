@@ -4,7 +4,12 @@ import {
   gellmembersbycom,
 } from "../services/ConferenceServices";
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
 import homeIcon from "../assets/home36.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileExcel, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 function CommitteewiseMembers() {
   const [committees, setCommittees] = useState([]);
@@ -76,6 +81,41 @@ function CommitteewiseMembers() {
     member.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Export to Excel
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      existingmambers.map((member) => ({
+        Name: toSentenceCase(member.name),
+        Email: member.email,
+        Role: toSentenceCase(member.role),
+        Country: toSentenceCase(member.country),
+        Mobile: toSentenceCase(member.mobile),
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Committeewise Members");
+    XLSX.writeFile(workbook, "Committeewise_Members_Report.xlsx");
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Committeewise Members Report", 14, 10);
+
+    const tableColumn = ["Name", "Email", "Role", "Country", "Mobile"];
+    const tableRows = existingmambers.map((member) => [
+      toSentenceCase(member.name),
+      member.email,
+      toSentenceCase(member.role),
+      toSentenceCase(member.country),
+      toSentenceCase(member.mobile),
+    ]);
+
+    doc.autoTable(tableColumn, tableRows, { startY: 20 });
+    doc.save("Committeewise_Members_Report.pdf");
+  };
+  
+
   return (
     <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50">
       {/* Home Icon */}
@@ -86,6 +126,23 @@ function CommitteewiseMembers() {
           className="cursor-pointer w-8 h-8"
           onClick={redirectToHome}
         />
+      </div>
+      {/* Export Buttons */}
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={exportToExcel}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
+          Export to Excel
+        </button>
+        <button
+          onClick={exportToPDF}
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+          Export to PDF
+        </button>
       </div>
 
       {showPopup && (

@@ -6,8 +6,8 @@ const SubscriberRegistration = () => {
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState(false);
   const [otp, setOtp] = useState("");
-const [emailVerificationStep, setEmailVerificationStep] = useState(1);
-  
+  const [emailVerificationStep, setEmailVerificationStep] = useState(1);
+
   const [formData, setFormData] = useState({
     applicantName: "",
     applicantDesignation: "",
@@ -31,9 +31,9 @@ const [emailVerificationStep, setEmailVerificationStep] = useState(1);
     authorizedSignatory: "",
   });
 
-    const [paperId, setPaperId] = useState("");
-    
-    const createSubscriber = () => {
+  const [paperId, setPaperId] = useState("");
+
+  const createSubscriber = () => {
     const subscriber = {
       applicantName: formData.applicantName,
       applicantDesignation: formData.applicantDesignation,
@@ -55,9 +55,8 @@ const [emailVerificationStep, setEmailVerificationStep] = useState(1);
       conferenceCountry: formData.conferenceCountry,
       conferenceEmail: formData.conferenceEmail,
       authorizedSignatory: formData.authorizedSignatory,
-    }
-}
-
+    };
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,24 +67,38 @@ const [emailVerificationStep, setEmailVerificationStep] = useState(1);
   };
 
   const handleSendOtp = async () => {
+    // Validate that the conferenceEmail field is populated
+    if (!formData.conferenceEmail) {
+      alert("Please enter the Official Correspondence Email to send OTP.");
+      return;
+    }
+
+    // Optional: Validate email format using regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.conferenceEmail)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
     try {
       const response = await fetch("http://localhost:5000/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.conferenceEmail }),
       });
-  
+
       if (response.ok) {
         setEmailVerificationStep(2); // Move to OTP verification step
-        alert("OTP sent to your email.");
+        alert("OTP sent to your Official Correspondence Email.");
       } else {
         alert("Failed to send OTP. Try again.");
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
+      alert("An error occurred while sending the OTP. Please try again later.");
     }
   };
-  
+
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch("http://localhost:5000/verify-otp", {
@@ -93,7 +106,7 @@ const [emailVerificationStep, setEmailVerificationStep] = useState(1);
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.conferenceEmail, otp }),
       });
-  
+
       if (response.ok) {
         alert("Email verified successfully!");
         setEmailVerificationStep(3); // Mark email as verified
@@ -104,7 +117,6 @@ const [emailVerificationStep, setEmailVerificationStep] = useState(1);
       console.error("Error verifying OTP:", error);
     }
   };
-  
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -154,144 +166,156 @@ const [emailVerificationStep, setEmailVerificationStep] = useState(1);
               <u>Subscriber Registration Form</u>
             </div>
 
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Applicant Section */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-700">Applicant</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                ["Name", "applicantName"],
-                ["Designation", "applicantDesignation"],
-                ["Address", "applicantAddress"],
-                ["City", "applicantCity"],
-                ["State", "applicantState"],
-                ["Country", "applicantCountry"],
-                ["Mobile", "applicantMobile"],
-                ["Email", "applicantEmail"],
-              ].map(([label, name]) => (
-                <div key={name} className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">
-                    {label}
-                  </label>
-                  <input
-                    type={name.includes("Email") ? "email" : "text"}
-                    name={name}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    className="mt-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Applicant Section */}
+              <section>
+                <h2 className="text-lg font-semibold text-gray-700">
+                  Applicant
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    ["Name", "applicantName"],
+                    ["Designation", "applicantDesignation"],
+                    ["Address", "applicantAddress"],
+                    ["City", "applicantCity"],
+                    ["State", "applicantState"],
+                    ["Country", "applicantCountry"],
+                    ["Mobile", "applicantMobile"],
+                    ["Email", "applicantEmail"],
+                  ].map(([label, name]) => (
+                    <div key={name} className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600">
+                        {label}
+                      </label>
+                      <input
+                        type={name.includes("Email") ? "email" : "text"}
+                        name={name}
+                        value={formData[name]}
+                        onChange={handleChange}
+                        className="mt-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
+              </section>
 
-          {/* Organization Section */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-700">Organization</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                ["Name", "organizationName"],
-                ["Address", "organizationAddress"],
-                ["City", "organizationCity"],
-                ["State", "organizationState"],
-                ["Country", "organizationCountry"],
-                ["Contact Number", "organizationContactNumber"],
-                ["Email", "organizationEmail"],
-              ].map(([label, name]) => (
-                <div key={name} className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">
-                    {label}
-                  </label>
-                  <input
-                    type={name.includes("Email") ? "email" : "text"}
-                    name={name}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    className="mt-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+              {/* Organization Section */}
+              <section>
+                <h2 className="text-lg font-semibold text-gray-700">
+                  Organization
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    ["Name", "organizationName"],
+                    ["Address", "organizationAddress"],
+                    ["City", "organizationCity"],
+                    ["State", "organizationState"],
+                    ["Country", "organizationCountry"],
+                    ["Contact Number", "organizationContactNumber"],
+                    ["Email", "organizationEmail"],
+                  ].map(([label, name]) => (
+                    <div key={name} className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600">
+                        {label}
+                      </label>
+                      <input
+                        type={name.includes("Email") ? "email" : "text"}
+                        name={name}
+                        value={formData[name]}
+                        onChange={handleChange}
+                        className="mt-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
+              </section>
 
-          <section>
-  <h2 className="text-lg font-semibold text-gray-700">Conference</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {[
-      ["Title of the Conference", "conferenceTitle"],
-      ["Discipline", "conferenceDiscipline"],
-      ["Country", "conferenceCountry"],
-      ["Official Correspondence Email", "conferenceEmail"],
-      ["Authorized Signatory", "authorizedSignatory"],
-    ].map(([label, name]) => (
-      <div key={name} className="flex flex-col">
-        <label className="text-sm font-medium text-gray-600">{label}</label>
-        <input
-          type={name.includes("Email") ? "email" : "text"}
-          name={name}
-          value={formData[name]}
-          onChange={handleChange}
-          className="mt-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-      </div>
-    ))}
+              <section>
+                <h2 className="text-lg font-semibold text-gray-700">
+                  Conference
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Conference Fields */}
+                  {[
+                    ["Title of the Conference", "conferenceTitle"],
+                    ["Discipline", "conferenceDiscipline"],
+                    ["Country", "conferenceCountry"],
+                    ["Official Correspondence Email", "conferenceEmail"],
+                    ["Authorized Signatory", "authorizedSignatory"],
+                  ].map(([label, name]) => (
+                    <div key={name} className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600">
+                        {label}
+                      </label>
+                      <input
+                        type={name.includes("Email") ? "email" : "text"}
+                        name={name}
+                        value={formData[name]}
+                        onChange={handleChange}
+                        className="mt-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
 
-    {/* Conditional Rendering for OTP Verification */}
-    {emailVerificationStep === 1 && (
-      <div className="col-span-2 flex flex-col">
-        <button
-          type="button"
-          onClick={handleSendOtp}
-          className="mt-2 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-        >
-          Send OTP
-        </button>
-      </div>
-    )}
+                      {/* Add the Send OTP button below the Official Correspondence Email */}
+                      {name === "conferenceEmail" &&
+                        emailVerificationStep === 1 && (
+                          <button
+                            type="button"
+                            onClick={handleSendOtp}
+                            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                          >
+                            Send OTP
+                          </button>
+                        )}
 
-    {emailVerificationStep === 2 && (
-      <div className="col-span-2 flex flex-col mt-2">
-        <label className="text-sm font-medium text-gray-600">Enter OTP</label>
-        <input
-          type="text"
-          value={otp}
-          onChange={(e) => setOtp(e.target.value)}
-          className="mt-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <button
-          type="button"
-          onClick={handleVerifyOtp}
-          className="mt-2 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
-        >
-          Verify OTP
-        </button>
-      </div>
-    )}
+                      {/* Show OTP input and verification button */}
+                      {name === "conferenceEmail" &&
+                        emailVerificationStep === 2 && (
+                          <div className="flex flex-col mt-2">
+                            <label className="text-sm font-medium text-gray-600">
+                              Enter OTP
+                            </label>
+                            <input
+                              type="text"
+                              value={otp}
+                              onChange={(e) => setOtp(e.target.value)}
+                              className="mt-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifyOtp}
+                              className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                            >
+                              Verify OTP
+                            </button>
+                          </div>
+                        )}
 
-    {emailVerificationStep === 3 && (
-      <div className="col-span-2 mt-2 text-green-600 font-semibold">
-        Email Verified Successfully!
-      </div>
-    )}
-  </div>
-</section>
+                      {/* Email verified message */}
+                      {name === "conferenceEmail" &&
+                        emailVerificationStep === 3 && (
+                          <div className="mt-2 text-green-600 font-semibold">
+                            Email Verified Successfully!
+                          </div>
+                        )}
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              Submit
-            </button>
+              {/* Submit Button */}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
-    </div>
     </div>
   );
 };

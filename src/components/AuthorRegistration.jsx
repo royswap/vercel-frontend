@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom"; // Add useLocation to retrieve state
 import {
   createAuthorWork,
   fetchauthorwork,
   withdrawPaper,
   editAuthor,
 } from "../services/ConferenceServices";
-import { useLoaderData } from "react-router-dom";
-import { getAllConference } from "../services/ConferenceServices";
-import { useNavigate } from "react-router-dom";
 import homeIcon from "../assets/home36.png";
 
 const AuthorRegistration = () => {
-  const [conferenceList, setConferenceList] = useState([]);
+  const location = useLocation(); // Add this to access the navigation state
+  const conferenceTitle = location.state?.conferenceTitle || "No Conference Selected"; // Retrieve the conference title, with a fallback
   const [loading, setLoading] = useState(false);
-  const [editPaper, seteditPaper] = useState(true);
-  const [conference, setConference] = useState("");
+  const [editPaper, seteditPaper] = useState(false);
   const [tracks, setTracks] = useState([]);
   const [trackName, setTrackName] = useState("");
   const [topics, setTopics] = useState([]);
@@ -60,28 +58,67 @@ const AuthorRegistration = () => {
     abstract: "",
     pdfFile: "",
   });
+  const [keywordsWordCount, setKeywordsWordCount] = useState(0);
+  const [abstractWordCount, setAbstractWordCount] = useState(0);
+  const [keywordsLimitError, setKeywordsLimitError] = useState(false);
+  const [abstractLimitError, setAbstractLimitError] = useState(false);
+  const [pdfFileTypeError, setPdfFileTypeError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // Added state for error message
 
   const [paperDetails, setPaperDetails] = useState({});
 
   const defaultTrack =
     paperDetails.track && paperDetails.track.track_name
       ? paperDetails.track.track_name
-      : "Select Track";
+      : "Select Track";
 
-  const defaultConference =
-    paperDetails && paperDetails.conference_title
-      ? paperDetails.conference_title
-      : "Select Conference";
   const navigate = useNavigate(); // Initialize navigate
 
+  // Debug errorMessage state changes
   useEffect(() => {
-    getAllConference()
-      .then((res) => {
-        console.log(res.data);
-        setConferenceList(res.data);
-        //setTracks(res.data.tracks);
-      })
-      .catch(() => {});
+    if (errorMessage) {
+      console.log("errorMessage updated to:", errorMessage);
+    }
+  }, [errorMessage]);
+
+  // Debug component re-renders
+  useEffect(() => {
+    console.log("Component re-rendered, errorMessage is:", errorMessage);
+  });
+
+  // Load saved data from localStorage when the component mounts
+  useEffect(() => {
+    const savedData = localStorage.getItem('savedFormData');
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      setName(parsedData.name || "");
+      setAffiliation(parsedData.affiliation || "");
+      setCountry(parsedData.country || "");
+      setContactNumber(parsedData.contactNumber || "");
+      setEmail(parsedData.email || "");
+      setGooglescId(parsedData.googlescId || "");
+      setOrchidId(parsedData.orchidId || "");
+      setTitle(parsedData.title || "");
+      setTrack(parsedData.track || "");
+      setSelectedTrackId(parsedData.selectedTrackId || "");
+      setKeywords(parsedData.keywords || "");
+      setAbstract(parsedData.abstract || "");
+      setCoAuthors(parsedData.CoAuthors || [
+        {
+          name: "",
+          email: "",
+          mobile: "",
+          affiliation: "",
+          country: "",
+          isCorresponding: false,
+        },
+      ]);
+      setIsCorrespondingAuthor(parsedData.isCorrespondingAuthor || false);
+      // Note: pdfFile cannot be restored from localStorage
+      // Update word counts for loaded data
+      setKeywordsWordCount(countWords(parsedData.keywords || ""));
+      setAbstractWordCount(countWords(parsedData.abstract || ""));
+    }
   }, []);
 
   const handleTrackChange = (e) => {
@@ -100,11 +137,57 @@ const AuthorRegistration = () => {
     setEmail();
   };
 
+  const countWords = (text) => {
+    if (!text) return 0;
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
+
+  const handleKeywordsChange = (e) => {
+    const value = e.target.value;
+    setKeywords(value);
+    const wordCount = countWords(value);
+    setKeywordsWordCount(wordCount);
+    setKeywordsLimitError(wordCount > 5);
+    if (errors.keywords && wordCount <= 5) {
+      setErrors((prev) => ({ ...prev, keywords: "" }));
+    }
+  };
+
+  const handleAbstractChange = (e) => {
+    const value = e.target.value;
+    setAbstract(value);
+    const wordCount = countWords(value);
+    setAbstractWordCount(wordCount);
+    setAbstractLimitError(wordCount > 1000);
+    if (errors.abstract && wordCount <= 1000) {
+      setErrors((prev) => ({ ...prev, abstract: "" }));
+    }
+  };
+
+  const handlePdfFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      if (fileExtension !== 'pdf') {
+        setPdfFileTypeError(true);
+        setPdfFile(null); // Clear the file if it's not a PDF
+        setErrors((prev) => ({ ...prev, pdfFile: "Please upload a PDF file only." }));
+      } else {
+        setPdfFileTypeError(false);
+        setPdfFile(file);
+        setErrors((prev) => ({ ...prev, pdfFile: "" })); // Clear any existing PDF error
+      }
+    } else {
+      setPdfFileTypeError(false);
+      setPdfFile(null);
+    }
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     console.log("gggggg");
-    const newErrors = {};
 
+    const newErrors = {};
     if (!name) newErrors.name = "Name is required.";
     if (!affiliation) newErrors.affiliation = "Affiliation is required.";
     if (!country) newErrors.country = "Country is required.";
@@ -115,7 +198,24 @@ const AuthorRegistration = () => {
     if (!keywords) newErrors.keywords = "Keywords are required.";
     if (!abstract) newErrors.abstract = "Abstract is required.";
     if (!pdfFile) newErrors.pdfFile = "PDF file is required.";
-    setErrors(newErrors);
+    if (keywordsWordCount > 5) newErrors.keywords = "Keywords exceed 5 words.";
+    if (abstractWordCount > 1000) newErrors.abstract = "Abstract exceeds 1000 words.";
+    if (pdfFileTypeError) newErrors.pdfFile = "Please upload a PDF file only.";
+
+    // Check for mandatory fields and display error message
+    const mandatoryFieldsMissing = !name || !affiliation || !country || !email || !title || !track || !keywords || !abstract || !pdfFile;
+    if (mandatoryFieldsMissing) {
+      setTimeout(() => {
+        setErrorMessage("Mandatory fields are required");
+      }, 0);
+      setErrors(newErrors);
+      return;
+    } else {
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 0);
+      setErrors(newErrors);
+    }
 
     if (Object.keys(newErrors).length > 0) {
       console.log("ddd");
@@ -147,14 +247,13 @@ const AuthorRegistration = () => {
     };
 
     setLoading(true);
-    createAuthorWork(authorWorkData, selectedTrackId, conference._id, pdfFile)
+    createAuthorWork(authorWorkData, selectedTrackId, pdfFile)
       .then((Response) => {
-        // setCompletionMessage(Response.data.message);
         console.log(Response.data);
         setPaperId(Response.data.paper_id);
         setShowPopup(true);
         clearData();
-        seteditPaper(false);
+        seteditPaper(true);
       })
       .catch((err) => {
         alert(err.response.data.error);
@@ -194,29 +293,13 @@ const AuthorRegistration = () => {
     window.location.reload();
   };
 
-  const handleConferenceChange = (event) => {
-    const selectedConferenceId = event.target.value;
-    const selectedConferenceData = conferenceList.find(
-      (conference) => conference._id == selectedConferenceId
-    );
-    setConference(selectedConferenceData);
-    setTracks(selectedConferenceData.tracks);
-    console.log(selectedConferenceData.tracks);
-  };
-
   const redirectToHome = () => {
     navigate("/select-conference"); //redirection by home icon
   };
 
-  const redirectToSearchPaper = () => {
-    navigate("/search-paper"); //redirection by button
-  };
-
   const handleGoButtonClick = () => {
-    // navigate("/search-paper"); //redirection by button
     fetchauthorwork(paperID)
       .then((Response) => {
-        // setCompletionMessage(Response.data.message);
         console.log(Response.data);
         setPaperDetails(Response.data);
         setName(Response.data.name);
@@ -229,7 +312,10 @@ const AuthorRegistration = () => {
         setTitle(Response.data.title);
         setKeywords(Response.data.keywords);
         setAbstract(Response.data.abstract);
-        seteditPaper(false); // Enable editing
+        seteditPaper(true);
+        // Update word counts for fetched data
+        setKeywordsWordCount(countWords(Response.data.keywords));
+        setAbstractWordCount(countWords(Response.data.abstract));
       })
       .catch((err) => {
         console.error("Error fetching paper data:", err);
@@ -244,21 +330,8 @@ const AuthorRegistration = () => {
     }
     console.log(paperID);
 
-    // setLoading(true);
     withdrawPaper(paperID)
       .then(() => {
-        // Clear form inputs
-        // setConferenceName("");
-        // setName("");
-        // setAffiliation("");
-        // setCountry("");
-        // setContactNumber("");
-        // setEmail("");
-        // setTitle("");
-        // setPdfFile(null);
-        // setPaperID("");
-        // setPaperDetails({});
-        // setLoading(false);
         alert("Paper withdrawn successfully.");
       })
       .catch((error) => {
@@ -270,6 +343,39 @@ const AuthorRegistration = () => {
 
   const handleFormEdit = (e) => {
     e.preventDefault();
+
+    const newErrors = {};
+    if (!name) newErrors.name = "Name is required.";
+    if (!affiliation) newErrors.affiliation = "Affiliation is required.";
+    if (!country) newErrors.country = "Country is required.";
+    if (!contactNumber) newErrors.contactNumber = "Contact number is required.";
+    if (!email) newErrors.email = "Email is required.";
+    if (!title) newErrors.title = "Title is required.";
+    if (!track) newErrors.track = "Track is required.";
+    if (!keywords) newErrors.keywords = "Keywords are required.";
+    if (!abstract) newErrors.abstract = "Abstract is required.";
+    if (keywordsWordCount > 5) newErrors.keywords = "Keywords exceed 5 words.";
+    if (abstractWordCount > 1000) newErrors.abstract = "Abstract exceeds 1000 words.";
+    if (pdfFileTypeError) newErrors.pdfFile = "Please upload a PDF file only.";
+
+    // Check for mandatory fields and display error message
+    const mandatoryFieldsMissing = !name || !affiliation || !country || !email || !title || !track || !keywords || !abstract || (paperDetails.pdfLink ? false : !pdfFile);
+    if (mandatoryFieldsMissing) {
+      setTimeout(() => {
+        setErrorMessage("Mandatory fields are required");
+      }, 0);
+      setErrors(newErrors);
+      return;
+    } else {
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 0);
+      setErrors(newErrors);
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      return;
+    }
 
     const coAuthorsData = CoAuthors.map((coAuthor) => ({
       name: coAuthor.name,
@@ -293,22 +399,40 @@ const AuthorRegistration = () => {
       co_authors: coAuthorsData,
     };
 
-    console.log("Changed Data:", authorWorkData); // Add this line
-    // console.log("Changed Data:", paperID); // Add this line
-    // console.log("Changed Data:", selectedTrackId); // Add this line
-    // console.log("Changed Data:", conference); // Add this line
+    console.log("Changed Data:", authorWorkData);
 
     editAuthor(JSON.stringify(authorWorkData), paperID, pdfFile)
       .then((res) => {
         alert("Paper details updated successfully.");
         console.log(res.data);
-        seteditPaper(true); // Disable editing
+        seteditPaper(true); // Disable editing after saving changes
       })
       .catch((err) => {
         console.error("Error updating paper details:", err);
         alert("An error occurred while updating paper details.");
       });
-    // console.log(pdfFile);
+  };
+
+  const handleSave = () => {
+    const formData = {
+      name,
+      affiliation,
+      country,
+      contactNumber,
+      email,
+      googlescId,
+      orchidId,
+      title,
+      track,
+      selectedTrackId,
+      keywords,
+      abstract,
+      CoAuthors,
+      isCorrespondingAuthor,
+      pdfFileName: pdfFile ? pdfFile.name : null,
+    };
+    localStorage.setItem('savedFormData', JSON.stringify(formData));
+    alert('Form data saved successfully!');
   };
 
   const handleEditToggle = () => {
@@ -355,14 +479,21 @@ const AuthorRegistration = () => {
               </div>
             )}
             <div className="flex items-center justify-center text-4xl mb-4">
-              <u>Submit Paper and Edit</u>
+              <div className="text-center">
+                <h1 className="text-4xl mb-2">{conferenceTitle}</h1> {/* Display the conference title */}
+                <u className="text-4xl">Submit Paper and Edit</u>
+              </div>
             </div>
 
-            {/* {completionMessage && (
-                <div className="alert alert-success mb-4">
-                  {completionMessage}
-                </div>
-              )} */}
+            {/* Display error message if mandatory fields are missing */}
+            {errorMessage && (
+              <div
+                className="text-red-500 text-center mb-4"
+                style={{ color: "red", fontWeight: "bold" }}
+              >
+                {errorMessage}
+              </div>
+            )}
 
             {paperDetails && !editPaper ? (
               <form onSubmit={handleFormEdit}>
@@ -374,6 +505,7 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300"
                     value={paperID}
                     onChange={(e) => setPaperID(e.target.value)}
+                    disabled={editPaper}
                   />
                   <button
                     type="button"
@@ -384,39 +516,11 @@ const AuthorRegistration = () => {
                   </button>
                 </div>
 
-                {/* Conference */}
-                <div className="mb-4">
-                  <label className="block text-gray-700">Conference:</label>
-                  <select
-                    className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.track ? "border-red-500" : ""
-                    }`}
-                    onChange={handleConferenceChange}
-                  >
-                    <option value="">
-                      {paperDetails && paperDetails.conference_title
-                        ? paperDetails.conference_title
-                        : "Select Conference"}
-                    </option>
-                    {conferenceList.map((conferenceItem) => (
-                      <option
-                        key={conferenceItem._id}
-                        value={conferenceItem._id}
-                      >
-                        {toSentenceCase(conferenceItem.conference_title)}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.track && (
-                    <p className="text-red-500 text-xs italic">
-                      {errors.track}
-                    </p>
-                  )}
-                </div>
-
                 {/* Name */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Name:</label>
+                  <label className="block text-gray-700">
+                    Name: <span className="text-red-500">*</span>
+                  </label>
                   <div className="flex items-center">
                     <input
                       type="text"
@@ -425,6 +529,7 @@ const AuthorRegistration = () => {
                       }`}
                       value={toSentenceCase(name)}
                       onChange={(e) => setName(e.target.value)}
+                      disabled={editPaper}
                     />
                     <label className="ml-2">
                       <input
@@ -434,6 +539,7 @@ const AuthorRegistration = () => {
                         onChange={(e) =>
                           setIsCorrespondingAuthor(e.target.checked)
                         }
+                        disabled={editPaper}
                       />
                       <span className="ml-1">Corresponding Author</span>
                     </label>
@@ -444,13 +550,16 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Affiliation */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Affiliation:</label>
+                  <label className="block text-gray-700">
+                    Affiliation: <span className="text-red-500">*</span>
+                  </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.affiliation ? "border-red-500" : ""
                     }`}
                     value={toSentenceCase(affiliation)}
                     onChange={(e) => setAffiliation(e.target.value)}
+                    disabled={editPaper}
                   ></textarea>
                   {errors.affiliation && (
                     <p className="text-red-500 text-xs italic">
@@ -460,7 +569,9 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Country */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Country:</label>
+                  <label className="block text-gray-700">
+                    Country: <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -468,6 +579,7 @@ const AuthorRegistration = () => {
                     }`}
                     value={toSentenceCase(country)}
                     onChange={(e) => setCountry(e.target.value)}
+                    disabled={editPaper}
                   />
                   {errors.country && (
                     <p className="text-red-500 text-xs italic">
@@ -485,6 +597,7 @@ const AuthorRegistration = () => {
                     }`}
                     value={contactNumber}
                     onChange={(e) => setContactNumber(e.target.value)}
+                    disabled={editPaper}
                   />
                   {errors.contactNumber && (
                     <p className="text-red-500 text-xs italic">
@@ -494,7 +607,9 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Email */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Email:</label>
+                  <label className="block text-gray-700">
+                    Email: <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="email"
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -502,6 +617,7 @@ const AuthorRegistration = () => {
                     }`}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={editPaper}
                   />
                   {errors.email && (
                     <p className="text-red-500 text-xs italic">
@@ -519,6 +635,7 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block w-full border border-gray-300"
                     value={googlescId}
                     onChange={(e) => setGooglescId(e.target.value)}
+                    disabled={editPaper}
                   />
                 </div>
                 {/* ORCID ID */}
@@ -531,17 +648,21 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block w-full border border-gray-300"
                     value={orchidId}
                     onChange={(e) => setOrchidId(e.target.value)}
+                    disabled={editPaper}
                   />
                 </div>
                 {/* Title */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Title:</label>
+                  <label className="block text-gray-700">
+                    Title: <span className="text-red-500">*</span>
+                  </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.title ? "border-red-500" : ""
                     }`}
                     value={toSentenceCase(title)}
                     onChange={(e) => setTitle(e.target.value)}
+                    disabled={editPaper}
                   ></textarea>
                   {errors.title && (
                     <p className="text-red-500 text-xs italic">
@@ -551,18 +672,21 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Track */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Track:</label>
+                  <label className="block text-gray-700">
+                    Track: <span className="text-red-500">*</span>
+                  </label>
                   <select
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.track ? "border-red-500" : ""
                     }`}
                     value={selectedTrackId}
                     onChange={handleTrackChange}
+                    disabled={editPaper}
                   >
                     <option value="">
                       {paperDetails.track && paperDetails.track.track_name
                         ? toSentenceCase(paperDetails.track.track_name)
-                        : "Select Track"}
+                        : "Select Track"}
                     </option>
                     {tracks.map((trackItem) => (
                       <option key={trackItem._id} value={trackItem._id}>
@@ -576,34 +700,25 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Topic */}
-                {/* <div className="mb-4">
-                  <label className="block text-gray-700">Topic:</ label>
-                  <select
-                    className={`form-select mt-1 block w-full ${errors.topicid ? 'border-red-500' : ''}`}
-                    value={topicid}
-                    onChange={(e) => setTopicid(e.target.value)}
-                  >
-                    <option value="">Select Topic</option>
-                    {topics.map((topicItem) => (
-                      <option key={topicItem.topic_id} value={topicItem.topic_id}>
-                        {topicItem.topic_name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.topicid && <p className="text-red-500 text-xs italic">{errors.topicid}</p>}
-                </div> */}
                 {/* Keywords */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Keywords:</label>
+                  <label className="block text-gray-700">
+                    Keywords: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 5 words)</span>
+                  </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.keywords ? "border-red-500" : ""
+                      errors.keywords || keywordsLimitError ? "border-red-500" : ""
                     }`}
                     value={toSentenceCase(keywords)}
-                    onChange={(e) => setKeywords(e.target.value)}
+                    onChange={handleKeywordsChange}
+                    disabled={editPaper}
                   ></textarea>
-                  {errors.keywords && (
+                  {keywordsLimitError && (
+                    <p className="text-red-500 text-xs italic">
+                      Word limit exceeded (max 5 words)
+                    </p>
+                  )}
+                  {errors.keywords && !keywordsLimitError && (
                     <p className="text-red-500 text-xs italic">
                       {errors.keywords}
                     </p>
@@ -611,15 +726,23 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Abstract */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Abstract:</label>
+                  <label className="block text-gray-700">
+                    Abstract: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 1000 words)</span>
+                  </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.abstract ? "border-red-500" : ""
+                      errors.abstract || abstractLimitError ? "border-red-500" : ""
                     }`}
                     value={toSentenceCase(abstract)}
-                    onChange={(e) => setAbstract(e.target.value)}
+                    onChange={handleAbstractChange}
+                    disabled={editPaper}
                   ></textarea>
-                  {errors.abstract && (
+                  {abstractLimitError && (
+                    <p className="text-red-500 text-xs italic">
+                      Word limit exceeded (max 1000 words)
+                    </p>
+                  )}
+                  {errors.abstract && !abstractLimitError && (
                     <p className="text-red-500 text-xs italic">
                       {errors.abstract}
                     </p>
@@ -627,7 +750,9 @@ const AuthorRegistration = () => {
                 </div>
                 {/* PDF File */}
                 <div className="mb-4 flex flex-col">
-                  <label className="block text-gray-700">PDF File:</label>
+                  <label className="block text-red-500">
+                    PDF File only: <span className="text-red-500">*</span>
+                  </label>
                   {paperDetails.pdfLink && (
                     <div className="mb-2">
                       <a
@@ -643,11 +768,17 @@ const AuthorRegistration = () => {
                   <input
                     type="file"
                     className={`form-input mt-1 block w-full ${
-                      errors.pdfFile ? "border-red-500" : ""
+                      errors.pdfFile || pdfFileTypeError ? "border-red-500" : ""
                     }`}
-                    onChange={(e) => setPdfFile(e.target.files[0])}
+                    onChange={handlePdfFileChange}
+                    disabled={editPaper}
                   />
-                  {errors.pdfFile && (
+                  {pdfFileTypeError && (
+                    <p className="text-red-500 text-xs italic">
+                      Please upload a PDF file only.
+                    </p>
+                  )}
+                  {errors.pdfFile && !pdfFileTypeError && (
                     <p className="text-red-500 text-xs italic">
                       {errors.pdfFile}
                     </p>
@@ -674,6 +805,7 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <input
                             type="email"
@@ -687,6 +819,7 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -700,6 +833,7 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -713,6 +847,7 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -726,11 +861,13 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <button
                             type="button"
                             className="bg-red-500 text-white px-5 py-1 rounded"
                             onClick={() => handleDeleteCoAuthor(index)}
+                            disabled={editPaper}
                           >
                             Remove
                           </button>
@@ -751,6 +888,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <input
                               type="text"
@@ -764,6 +902,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <input
                               type="text"
@@ -777,6 +916,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <input
                               type="text"
@@ -790,6 +930,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <input
                               type="text"
@@ -803,6 +944,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <label className="mr-2">
                               <input
@@ -816,6 +958,7 @@ const AuthorRegistration = () => {
                                     e.target.checked
                                   )
                                 }
+                                disabled={editPaper}
                               />
                               <span className="ml-1">Corresponding Author</span>
                             </label>
@@ -823,6 +966,7 @@ const AuthorRegistration = () => {
                               type="button"
                               className="bg-red-500 text-white px-4 py-2 rounded"
                               onClick={() => handleDeleteCoAuthor(index)}
+                              disabled={editPaper}
                             >
                               Delete
                             </button>
@@ -834,6 +978,7 @@ const AuthorRegistration = () => {
                     type="button"
                     className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     onClick={handleAddCoAuthor}
+                    disabled={editPaper}
                   >
                     Add Co-Author
                   </button>
@@ -847,6 +992,20 @@ const AuthorRegistration = () => {
                     disabled={loading}
                   >
                     Save Changes
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    onClick={handleSave}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    onClick={handleEditToggle}
+                  >
+                    {editPaper ? "Edit" : "Cancel Edit"}
                   </button>
                   <button
                     type="button"
@@ -867,6 +1026,7 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300"
                     value={paperID}
                     onChange={(e) => setPaperID(e.target.value)}
+                    disabled={editPaper}
                   />
                   <button
                     type="button"
@@ -882,39 +1042,11 @@ const AuthorRegistration = () => {
                   </button>
                 </div>
 
-                {/* Conference */}
-                <div className="mb-4">
-                  <label className="block text-gray-700">Conference:</label>
-                  <select
-                    className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.track ? "border-red-500" : ""
-                    }`}
-                    onChange={handleConferenceChange}
-                  >
-                    <option value="">
-                      {paperDetails && paperDetails.conference_title
-                        ? paperDetails.conference_title
-                        : "Select Conference"}
-                    </option>
-                    {conferenceList.map((conferenceItem) => (
-                      <option
-                        key={conferenceItem._id}
-                        value={conferenceItem._id}
-                      >
-                        {toSentenceCase(conferenceItem.conference_title)}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.track && (
-                    <p className="text-red-500 text-xs italic">
-                      {errors.track}
-                    </p>
-                  )}
-                </div>
-
                 {/* Name */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Name:</label>
+                  <label className="block text-gray-700">
+                    Name: <span className="text-red-500">*</span>
+                  </label>
                   <div className="flex items-center">
                     <input
                       type="text"
@@ -923,6 +1055,7 @@ const AuthorRegistration = () => {
                       }`}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      disabled={editPaper}
                     />
                     <label className="ml-2">
                       <input
@@ -932,6 +1065,7 @@ const AuthorRegistration = () => {
                         onChange={(e) =>
                           setIsCorrespondingAuthor(e.target.checked)
                         }
+                        disabled={editPaper}
                       />
                       <span className="ml-1">Corresponding Author</span>
                     </label>
@@ -942,13 +1076,16 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Affiliation */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Affiliation:</label>
+                  <label className="block text-gray-700">
+                    Affiliation: <span className="text-red-500">*</span>
+                  </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.affiliation ? "border-red-500" : ""
                     }`}
                     value={affiliation}
                     onChange={(e) => setAffiliation(e.target.value)}
+                    disabled={editPaper}
                   ></textarea>
                   {errors.affiliation && (
                     <p className="text-red-500 text-xs italic">
@@ -958,7 +1095,9 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Country */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Country:</label>
+                  <label className="block text-gray-700">
+                    Country: <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -966,6 +1105,7 @@ const AuthorRegistration = () => {
                     }`}
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
+                    disabled={editPaper}
                   />
                   {errors.country && (
                     <p className="text-red-500 text-xs italic">
@@ -983,6 +1123,7 @@ const AuthorRegistration = () => {
                     }`}
                     value={contactNumber}
                     onChange={(e) => setContactNumber(e.target.value)}
+                    disabled={editPaper}
                   />
                   {errors.contactNumber && (
                     <p className="text-red-500 text-xs italic">
@@ -992,7 +1133,9 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Email */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Email:</label>
+                  <label className="block text-gray-700">
+                    Email: <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="email"
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -1000,6 +1143,7 @@ const AuthorRegistration = () => {
                     }`}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={editPaper}
                   />
                   {errors.email && (
                     <p className="text-red-500 text-xs italic">
@@ -1017,6 +1161,7 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block w-full border border-gray-300"
                     value={googlescId}
                     onChange={(e) => setGooglescId(e.target.value)}
+                    disabled={editPaper}
                   />
                 </div>
                 {/* ORCID ID */}
@@ -1029,17 +1174,21 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block w-full border border-gray-300"
                     value={orchidId}
                     onChange={(e) => setOrchidId(e.target.value)}
+                    disabled={editPaper}
                   />
                 </div>
                 {/* Title */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Title:</label>
+                  <label className="block text-gray-700">
+                    Title: <span className="text-red-500">*</span>
+                  </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.title ? "border-red-500" : ""
                     }`}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    disabled={editPaper}
                   ></textarea>
                   {errors.title && (
                     <p className="text-red-500 text-xs italic">
@@ -1049,18 +1198,21 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Track */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Track:</label>
+                  <label className="block text-gray-700">
+                    Track: <span className="text-red-500">*</span>
+                  </label>
                   <select
                     className={`form-input mt-1 block w-full border border-gray-300 ${
                       errors.track ? "border-red-500" : ""
                     }`}
                     value={selectedTrackId}
                     onChange={handleTrackChange}
+                    disabled={editPaper}
                   >
                     <option value="">
                       {paperDetails.track && paperDetails.track.track_name
                         ? toSentenceCase(paperDetails.track.track_name)
-                        : "Select Track"}
+                        : "Select Track"}
                     </option>
                     {tracks.map((trackItem) => (
                       <option key={trackItem._id} value={trackItem._id}>
@@ -1074,34 +1226,25 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Topic */}
-                {/* <div className="mb-4">
-                  <label className="block text-gray-700">Topic:</ label>
-                  <select
-                    className={`form-select mt-1 block w-full ${errors.topicid ? 'border-red-500' : ''}`}
-                    value={topicid}
-                    onChange={(e) => setTopicid(e.target.value)}
-                  >
-                    <option value="">Select Topic</option>
-                    {topics.map((topicItem) => (
-                      <option key={topicItem.topic_id} value={topicItem.topic_id}>
-                        {topicItem.topic_name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.topicid && <p className="text-red-500 text-xs italic">{errors.topicid}</p>}
-                </div> */}
                 {/* Keywords */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Keywords:</label>
+                  <label className="block text-gray-700">
+                    Keywords: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 5 words)</span>
+                  </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.keywords ? "border-red-500" : ""
+                      errors.keywords || keywordsLimitError ? "border-red-500" : ""
                     }`}
                     value={keywords}
-                    onChange={(e) => setKeywords(e.target.value)}
+                    onChange={handleKeywordsChange}
+                    disabled={editPaper}
                   ></textarea>
-                  {errors.keywords && (
+                  {keywordsLimitError && (
+                    <p className="text-red-500 text-xs italic">
+                      Word limit exceeded (max 5 words)
+                    </p>
+                  )}
+                  {errors.keywords && !keywordsLimitError && (
                     <p className="text-red-500 text-xs italic">
                       {errors.keywords}
                     </p>
@@ -1109,15 +1252,23 @@ const AuthorRegistration = () => {
                 </div>
                 {/* Abstract */}
                 <div className="mb-4">
-                  <label className="block text-gray-700">Abstract:</label>
+                  <label className="block text-gray-700">
+                    Abstract: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 1000 words)</span>
+                  </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.abstract ? "border-red-500" : ""
+                      errors.abstract || abstractLimitError ? "border-red-500" : ""
                     }`}
                     value={abstract}
-                    onChange={(e) => setAbstract(e.target.value)}
+                    onChange={handleAbstractChange}
+                    disabled={editPaper}
                   ></textarea>
-                  {errors.abstract && (
+                  {abstractLimitError && (
+                    <p className="text-red-500 text-xs italic">
+                      Word limit exceeded (max 1000 words)
+                    </p>
+                  )}
+                  {errors.abstract && !abstractLimitError && (
                     <p className="text-red-500 text-xs italic">
                       {errors.abstract}
                     </p>
@@ -1125,7 +1276,9 @@ const AuthorRegistration = () => {
                 </div>
                 {/* PDF File */}
                 <div className="mb-4 flex flex-col">
-                  <label className="block text-gray-700">PDF File:</label>
+                  <label className="block text-red-500">
+                    PDF File only: <span className="text-red-500">*</span>
+                  </label>
                   {paperDetails.pdfLink && (
                     <div className="mb-2">
                       <a
@@ -1141,11 +1294,17 @@ const AuthorRegistration = () => {
                   <input
                     type="file"
                     className={`form-input mt-1 block w-full ${
-                      errors.pdfFile ? "border-red-500" : ""
+                      errors.pdfFile || pdfFileTypeError ? "border-red-500" : ""
                     }`}
-                    onChange={(e) => setPdfFile(e.target.files[0])}
+                    onChange={handlePdfFileChange}
+                    disabled={editPaper}
                   />
-                  {errors.pdfFile && (
+                  {pdfFileTypeError && (
+                    <p className="text-red-500 text-xs italic">
+                      Please upload a PDF file only.
+                    </p>
+                  )}
+                  {errors.pdfFile && !pdfFileTypeError && (
                     <p className="text-red-500 text-xs italic">
                       {errors.pdfFile}
                     </p>
@@ -1172,6 +1331,7 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <input
                             type="email"
@@ -1185,6 +1345,7 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -1198,6 +1359,7 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -1211,6 +1373,7 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -1224,11 +1387,13 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
+                            disabled={editPaper}
                           />
                           <button
                             type="button"
-                            className="bg-red-500 text-white px-5 py-1 rounded"
+                            className="border rounded border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                             onClick={() => handleDeleteCoAuthor(index)}
+                            disabled={editPaper}
                           >
                             Remove
                           </button>
@@ -1249,6 +1414,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <input
                               type="text"
@@ -1262,6 +1428,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <input
                               type="text"
@@ -1275,6 +1442,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <input
                               type="text"
@@ -1288,6 +1456,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <input
                               type="text"
@@ -1301,6 +1470,7 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
+                              disabled={editPaper}
                             />
                             <label className="mr-2">
                               <input
@@ -1314,6 +1484,7 @@ const AuthorRegistration = () => {
                                     e.target.checked
                                   )
                                 }
+                                disabled={editPaper}
                               />
                               <span className="ml-1">Corresponding Author</span>
                             </label>
@@ -1321,6 +1492,7 @@ const AuthorRegistration = () => {
                               type="button"
                               className="border rounded border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                               onClick={() => handleDeleteCoAuthor(index)}
+                              disabled={editPaper}
                             >
                               Delete
                             </button>
@@ -1330,8 +1502,9 @@ const AuthorRegistration = () => {
 
                   <button
                     type="button"
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px- dobb7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     onClick={handleAddCoAuthor}
+                    disabled={editPaper}
                   >
                     Add Co-Author
                   </button>
@@ -1345,6 +1518,20 @@ const AuthorRegistration = () => {
                     disabled={loading}
                   >
                     {loading ? "Submit" : "Submit"}
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    onClick={handleSave}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    onClick={handleEditToggle}
+                  >
+                    {editPaper ? "Edit" : "Cancel Edit"}
                   </button>
                   {paperID && (
                     <button
@@ -1366,3 +1553,35 @@ const AuthorRegistration = () => {
 };
 
 export default AuthorRegistration;
+
+/* Edit Form (<form onSubmit={handleFormEdit}>):
+Added a "Withdraw Paper" button in the div with class flex justify center md:space-x-6 md:gap-4, after the "Edit" button.
+The button triggers handleWithdrawButtonClick, which calls the withdrawPaper function with the paperID to withdraw the paper. */
+
+/* Submission Form (<form onSubmit={handleFormSubmit}>):
+Added a "Withdraw Paper" button in the same div, after the "Edit" button, but it’s conditionally rendered only if paperID exists ({paperID && ...}).
+It also triggers handleWithdrawButtonClick to withdraw the paper. */
+
+/* In short,
+Added Edit, Save button to the form to toggle edit mode using handleEditToggle, and Withdraw Paper buttons to withdraw papers using handleWithdrawButtonClick */
+
+/* To remove the "Select Conference" field, modified the file by deleting the <select> element and its associated logic. Specifically:
+Removed the <select> dropdown for "Select Conference" from the JSX, which was located in the top right corner.
+Removed the conferences state and its useEffect hook that fetched conference data.
+Removed the handleConferenceChange function, which handled conference selection changes.
+Removed "Select Conference" dropdown, conferences state, useEffect for fetching conferences, and handleConferenceChange function to simplify the form. */
+
+/* To ensure the form accepts only PDF files and rejects Word or PPT files, the following changes:
+Added validation in the handlePdfFileChange function to check the file extension using file.name.split('.').pop().toLowerCase().
+If the extension isn't 'pdf', set pdfFileTypeError to true, clear the pdfFile state, and display an error message: "Please upload a PDF file only."
+Updated the form validation in handleFormSubmit and handleFormEdit to include pdfFileTypeError in the errors check, preventing submission if a non-PDF file is uploaded. 
+Added PDF-only validation in handlePdfFileChange by checking file extension, setting pdfFileTypeError, and updating form validation to reject non-PDF files (e.g., Word, PPT).*/
+
+/* To make fields like Name, Affiliation, Country, Email, Title, Track, Keywords, Abstract, and PDF mandatory, and to display an error message when they're missing, the following changes:
+Added validation logic in handleFormSubmit and handleFormEdit to check if mandatory fields (name, affiliation, country, email, title, track, keywords, abstract, pdfFile) are empty using const mandatoryFieldsMissing = !name || !affiliation || ....
+If mandatoryFieldsMissing is true, set an error message using setErrorMessage("Mandatory fields are required") and prevent form submission with a return.
+Added a conditional rendering in the JSX to display the error message: {errorMessage && <div className="text-red-500 text-center mb-4">{errorMessage}</div>}.
+Added individual error messages for each field in the errors state (e.g., if (!name) newErrors.name = "Name is required.";) to show specific feedback below each field. 
+Added mandatory field validation for Name, Affiliation, Country, Email, Title, Track, Keywords, Abstract, PDF in handleFormSubmit and handleFormEdit; set errorMessage state and displayed "Mandatory fields are required" if missing. */
+
+//Done

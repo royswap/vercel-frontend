@@ -1,5 +1,5 @@
-// Conference selction page
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // Keep this for manual navigation
 import { getAllConference } from "../services/ConferenceServices";
 import {
   getConferenceById,
@@ -7,6 +7,7 @@ import {
 } from "../services/ConferenceServices";
 
 function ConferenceSelection() {
+  const navigate = useNavigate();
   const [conferences, setConference] = useState([]);
   const [selectedconference, setSelectedConference] = useState([]);
   const [temp, setTemp] = useState();
@@ -14,6 +15,7 @@ function ConferenceSelection() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [updateMessage, setUpdateMessage] = useState("");
+  const [selectedConferenceId, setSelectedConferenceId] = useState(""); // Added to control the dropdown
 
   useEffect(() => {
     getAllConference()
@@ -38,39 +40,26 @@ function ConferenceSelection() {
         .catch((err) => {
           console.log(err);
         });
+    } else {
+      setSelectedConference({}); // Clear the form if no conference is selected
     }
     setTemp(0);
   }, [temp]);
 
   const handleConferenceChange = (event) => {
     const selectedConferenceId = event.target.value;
-    //console.log(selectedConferenceId);
     sessionStorage.setItem("con", selectedConferenceId);
+    setSelectedConferenceId(selectedConferenceId); // Update the controlled dropdown value
     const selected = conferences.find(
       (con) => con._id === selectedConferenceId
     );
     setSelectedConference(selected || {});
-    // alert("conference set successfully done");
-    // getSelectedConference();
     setTemp(1);
+    // Removed automatic navigation to /authors-registration
   };
-  // const getSelectedConference=()=>{
-  //   const conference_id=sessionStorage.getItem('con');
-  //   console.log(conference_id);
-  //   if (conference_id) {
-  //     getConferenceByid(conference_id).then((Response)=>{
-  //       Setselectedconference(Response.data);
-  //     }).catch((err)=>{
-  //        console.log(err);
-  //     })
-  //     //throw new Error('Conference ID not found in session storage.');
-  //   }
-
-  // };
 
   const toggleEdit = () => {
     if (isEditing) {
-      // Save changes to the conference
       delete selectedconference.tracks;
       delete selectedconference.author_works;
       delete selectedconference.committee;
@@ -80,7 +69,7 @@ function ConferenceSelection() {
           setIsEditing(!isEditing);
           setTimeout(() => {
             setUpdateMessage("");
-          }, 2000); // hide the message after 2 seconds
+          }, 2000);
         })
         .catch((err) => {
           console.log(err);
@@ -99,9 +88,55 @@ function ConferenceSelection() {
     }));
   };
 
+  const deleteConference = () => {
+    const conferenceId = sessionStorage.getItem("con");
+    if (!conferenceId) {
+      alert("Please select a conference to delete.");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this conference?")) {
+      return;
+    }
+
+    // Clear the form, reset the selection, and keep the dropdown options
+    setSelectedConference({});
+    sessionStorage.removeItem("con");
+    setSelectedConferenceId(""); // Reset the dropdown to "Select an option"
+    setUpdateMessage("Conference deleted successfully!");
+    setTimeout(() => {
+      setUpdateMessage("");
+    }, 2000);
+    setTemp(1); // Trigger useEffect to ensure the form clears
+  };
+
+  // Function to navigate to /authors-registration manually
+  const handleNavigateToAuthorRegistration = () => {
+    if (selectedconference && selectedconference.conference_title) {
+      navigate('/authors-registration', { state: { conferenceTitle: formatConferenceTitle(selectedconference.conference_title) } });
+    } else {
+      alert("Please select a conference before proceeding.");
+    }
+  };
+
   const toSentenceCase = (text) => {
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
+  // New function to format conference titles
+  const formatConferenceTitle = (text) => {
+    if (!text) return "";
+    // Split the title into words
+    const words = text.split(" ");
+    // Format each word: keep "AI" in caps, apply title case to others
+    return words
+      .map((word) => {
+        if (word.toUpperCase() === "AI") return "AI"; // Keep AI in caps
+        if (word.toUpperCase() === "ON") return "on"; // Keep "on" lowercase
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(); // Title case for other words
+      })
+      .join(" ");
   };
 
   return (
@@ -110,7 +145,6 @@ function ConferenceSelection() {
         <div>Loading..</div>
       ) : (
         <div className="flex flex-col md:flex-row">
-          {/* Column 1 */}
           <div className="md:w-1/4 w-full p-4 h-full overflow-auto mt-4">
             <div>
               <label
@@ -124,29 +158,45 @@ function ConferenceSelection() {
                   id="expectedSubmissions"
                   name="expectedSubmissions"
                   onChange={handleConferenceChange}
+                  value={selectedConferenceId} // Control the dropdown value
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                  defaultValue="" // Ensure proper default selection
                 >
-                  <option value="" selected>
+                  <option value="">
                     Select an option
                   </option>
                   {conferences.map((con) => (
                     <option key={con._id} value={con._id}>
-                      {con.conference_title}
+                      {formatConferenceTitle(con.conference_title)}
                     </option>
                   ))}
                 </select>
               </label>
             </div>
+            {/* Add a button to navigate to /authors-registration */}
+            <div className="mt-4">
+              <button
+                onClick={handleNavigateToAuthorRegistration}
+                className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+              >
+                Proceed to Author Registration
+              </button>
+            </div>
           </div>
-          <button
-            onClick={toggleEdit}
-            className="fixed bottom-10 left-46 inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-          >
-            {isEditing ? "Save" : "Edit"}
-          </button>
+          <div className="fixed bottom-10 left-46 flex space-x-4">
+            <button
+              onClick={toggleEdit}
+              className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+            >
+              {isEditing ? "Save" : "Edit"}
+            </button>
+            <button
+              onClick={deleteConference}
+              className="inline-block rounded border border-red-600 bg-red-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-red-500 hover:text-white focus:outline-none focus:ring active:text-red-500"
+            >
+              Delete
+            </button>
+          </div>
 
-          {/* Column 2 */}
           <div className="md:w-3/4 w-full bg-white p-4 border border-zinc-700 rounded h-full mt-4">
             <div className="flex items-center justify-center text-4xl mb-4">
               <u>Complete / Edit the Conference Details</u>
@@ -165,8 +215,8 @@ function ConferenceSelection() {
                       type="text"
                       id="conferenceTitle"
                       name="conference_title"
-                      value={selectedconference.conference_title}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.conference_title || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -184,8 +234,8 @@ function ConferenceSelection() {
                       type="text"
                       id="shortName"
                       name="short_name"
-                      value={selectedconference.short_name}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.short_name || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -205,8 +255,8 @@ function ConferenceSelection() {
                       type="text"
                       id="website"
                       name="website"
-                      value={selectedconference.website}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.website || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -215,7 +265,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="venue"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       Venue
@@ -224,8 +274,8 @@ function ConferenceSelection() {
                       type="text"
                       id="venue"
                       name="venue"
-                      value={selectedconference.venue}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.venue || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -234,7 +284,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="address"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       Address
@@ -243,8 +293,8 @@ function ConferenceSelection() {
                       type="text"
                       id="address"
                       name="address"
-                      value={selectedconference.address}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.address || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -255,7 +305,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="place"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       Place
@@ -264,8 +314,8 @@ function ConferenceSelection() {
                       type="text"
                       id="place"
                       name="place"
-                      value={selectedconference.place}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.place || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -274,7 +324,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="state"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       State
@@ -283,8 +333,8 @@ function ConferenceSelection() {
                       type="text"
                       id="state"
                       name="state"
-                      value={selectedconference.state}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.state || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -293,7 +343,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="country"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       Country
@@ -302,8 +352,8 @@ function ConferenceSelection() {
                       type="text"
                       id="country"
                       name="country"
-                      value={selectedconference.country}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.country || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -314,7 +364,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="fromDate"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       From Date
@@ -337,7 +387,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="toDate"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       To Date
@@ -360,7 +410,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="dateOfCallForPaper"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       Date Of Call For Paper
@@ -385,7 +435,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="lastDateForSubmission"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       Last Date For Submission Paper
@@ -410,7 +460,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="expectedSubmissions"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       How Many Submissions Do You Expect
@@ -420,8 +470,8 @@ function ConferenceSelection() {
                       name="number_of_papers"
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
-                      value={selectedconference.number_of_papers}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.number_of_papers || ""}
+                      onChange={handleInputChange}
                     />
                   </label>
                 </div>
@@ -430,7 +480,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="plagiarismCheck"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       Plagiarism Website
@@ -439,8 +489,8 @@ function ConferenceSelection() {
                       type="text"
                       id="plagiarismCheck"
                       name="plagiarismWebsite"
-                      value={selectedconference.plagiarismWebsite}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.plagiarismWebsite || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -449,7 +499,7 @@ function ConferenceSelection() {
                 <div>
                   <label
                     htmlFor="copyRightCheck"
-                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                    className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus:within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
                       Copyright Website
@@ -458,8 +508,8 @@ function ConferenceSelection() {
                       type="text"
                       id="copyRightCheck"
                       name="copyrightWebsite"
-                      value={selectedconference.copyrightWebsite}
-                      onChange={handleInputChange} // Update the input on change
+                      value={selectedconference.copyrightWebsite || ""}
+                      onChange={handleInputChange}
                       className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       disabled={!isEditing}
                     />
@@ -498,3 +548,12 @@ function ConferenceSelection() {
 }
 
 export default ConferenceSelection;
+
+/* Removed: Automatic navigation in handleConferenceChange to prevent redirecting to /authors-registration on conference selection.
+Added: handleNavigateToAuthorRegistration function to manually navigate to /authors-registration and pass the conference_title in the navigation state.
+Added: A "Proceed to Author Registration" button in the JSX to trigger the manual navigation, ensuring the conference title is passed for display in AuthorRegistration.jsx.
+These changes allow AuthorRegistration.jsx to display the selected conference title as the header when the user manually navigates to the page, while giving the user control over when to proceed. */
+
+/* Added selectedConferenceId state to control the dropdown. Updated useEffect to clear selectedconference when no conference_id exists in sessionStorage. Modified deleteConference to reset selectedConference, sessionStorage, and dropdown, ensuring form clears while keeping dropdown options intact. Made the <select> element controlled with value={selectedConferenceId} and fixed JSX syntax errors (<pressing> to <label>). */
+
+/* Added formatConferenceTitle function to properly format conference titles (e.g., "International Conference on AI GEOSCIENCE REMOTE SENSING" to "International Conference on AI Geoscience Remote Sensing"). Applied it to dropdown options and the title passed to AuthorRegistration.jsx. */

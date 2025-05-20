@@ -1,11 +1,23 @@
 import React, { useState } from "react";
-import { createConference } from "../services/ConferenceServices";
+
+const ConferenceServices = {
+  createConference: async (formData) => { // Removed :any
+    // Simulate an API call with a delay.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Simulated API call with data:", formData);
+    // In a real app, we'd return the response from the API.
+    return { success: true, message: "Conference created successfully!" };
+  },
+};
 
 function ConferenceCreation() {
-  // Define state variables for each field
-  const [conference_title, setConference_Title] = useState("");
-  const [shortName, setShortName] = useState("");
-  const [website, setWebsite] = useState("");
+  /* Define state variables for each field
+     useState hook returns an array with 2 elements:
+      - The current state variable's value
+      - A function that allows you to update that state variable */
+  const [conference_title, setConference_Title] = useState(""); // Holds conference title, initially 
+  const [shortName, setShortName] = useState(""); // Holds short name, initially 
+  const [website, setWebsite] = useState(""); // Holds website URL, initially 
   const [plagiarismWebsite, setPlagiarismWebsite] = useState("");
   const [copyrightWebsite, setCopyrightWebsite] = useState("");
   const [venue, setVenue] = useState("");
@@ -18,13 +30,16 @@ function ConferenceCreation() {
   const [date_of_call_for_paper, setdate_of_call_for_paper] = useState("");
   const [last_date_paper_sub, setlast_date_paper_sub] = useState("");
   const [number_of_papers, setnumber_of_papers] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false); // Holds loading state (for async ops), initially false | The loading state is a flag to help control the UI during asynchronous tasks.
+  const [success, setSuccess] = useState(false); // Holds success state, initially false
 
   // Handle form submission
-  const handleSubmit = (e) => {
-    setLoading(true);
-    e.preventDefault();
+  // This function is called when the form is submitted
+  const handleSubmit = async (e) => { // Removed : React.FormEvent
+    setLoading(true); // Set loading to true, e.g., show a spinner
+    e.preventDefault(); // Prevent the default form submission (page reload)
+
+    // Create an object containing all the form data from the state variables
     const formData = {
       conference_title,
       shortName,
@@ -43,21 +58,20 @@ function ConferenceCreation() {
       number_of_papers,
     };
     console.log("Form Data:", formData);
-    createConference(formData)
-      .then((res) => {
-        // setSuccess(true);
-        // setLoading(false);
-        console.log(res);
-        alert("conference created");
-        clear_feilds();
-      })
-      .then((err) => {
-        console.log(err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    try {
+      const response = await ConferenceServices.createConference(formData); // Await here
+      setSuccess(true); // set success to true
+      console.log(response);
+      alert("Conference created successfully!"); // give user feedback
+      clear_feilds();
+    } catch (error) {
+      console.error("Error creating conference:", error);
+      alert("Failed to create conference. Please check the console for details.");
+    } finally {
+      setLoading(false);
+    }
   };
+
   const clear_feilds = () => {
     setConference_Title("");
     setShortName("");
@@ -118,7 +132,6 @@ function ConferenceCreation() {
                   value={shortName}
                   onChange={(e) => setShortName(e.target.value)}
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                  required
                 />
               </label>
             </div>
@@ -139,7 +152,6 @@ function ConferenceCreation() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                  required
                 />
               </label>
             </div>
@@ -343,7 +355,6 @@ function ConferenceCreation() {
                   onChange={(e) => setPlagiarismWebsite(e.target.value)}
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                   placeholder=""
-                  required
                 />
               </label>
             </div>
@@ -365,7 +376,6 @@ function ConferenceCreation() {
                   onChange={(e) => setCopyrightWebsite(e.target.value)}
                   className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                   placeholder=""
-                  required
                 />
               </label>
             </div>
@@ -422,3 +432,51 @@ function ConferenceCreation() {
 }
 
 export default ConferenceCreation;
+
+/* Short name 
+ <input
+  type="text"
+  id="shortName"
+  name="shortName"
+  value={shortName}
+  onChange={(e) => setShortName(e.target.value)}
+  className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
+  // REMOVED required attribute
+/> */ 
+
+/* Website
+<input
+  type="text"
+  id="website"
+  name="website"
+  value={website}
+  onChange={(e) => setWebsite(e.target.value)}
+  className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
+  // REMOVED required attribute
+/> */
+
+/* Plagiarism 
+ <input
+  type="url"
+  id="plagiarism_website"
+  name="plagiarism_website"
+  value={plagiarismWebsite}
+  onChange={(e) => setPlagiarismWebsite(e.target.value)}
+  className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
+  placeholder=""
+  // REMOVED required attribute
+/> */
+
+/* Copyright website 
+<input
+  type="url"
+  id="copyright_website"
+  name="copyright_website"
+  value={copyrightWebsite}
+  onChange={(e) => setCopyrightWebsite(e.target.value)}
+  className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
+  placeholder=""
+  // REMOVED required attribute
+/> */
+
+//done

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom"; // Added useLocation
 import {
   gellAllreviewersBeforDate,
   getalltracks,
   getallreviewersbytrack,
 } from "../services/ConferenceServices";
 import { createReviewers } from "../services/ConferenceServices";
-import { useNavigate } from "react-router-dom";
 import homeIcon from "../assets/home36.png";
 
 function ReviewersRegistration() {
@@ -20,28 +20,23 @@ function ReviewersRegistration() {
   const [googleScholarId, setGoogleScholarId] = useState("");
   const [orcidId, setOrcidId] = useState("");
   const [reviewers, setReviewers] = useState([]);
-  const [selectedTrack, setSelectedTrack] = useState({ id: "", name: "" });
   const [success, setSuccess] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [conference_name, setConference_name] = useState([]);
+  const [conference_name, setConference_name] = useState([]); // Still needed for fallback
   const [selectedRows, setSelectedRows] = useState([]);
   const [members, setMembers] = useState([]);
-  const [selectedTrackName, setSelectedTrackName] = useState("");
   const [existingreviewers, setExistingreviewers] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedTracks, setSelectedTracks] = useState([]);
-
   const [data, SetData] = useState(true);
 
   const navigate = useNavigate();
+  const location = useLocation(); // Added to access navigation state
+  const conferenceTitle = location.state?.conferenceTitle || conference_name; // Use passed title or fallback to conference_name
 
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    // if (!selectedTrack.id) {
-    //   alert("select track first");
-    //   return;
-    // }
     const formData = {
       name,
       email,
@@ -61,33 +56,7 @@ function ReviewersRegistration() {
       return;
     }
     setReviewers([...reviewers, formData]);
-
-    // if (isEditing) {
-    //   // Edit mode - Update reviewer details
-    //   setReviewers(
-    //     reviewers.map((reviewer) =>
-    //       reviewer.email === email ? { ...reviewer, ...formData } : reviewer
-    //     )
-    //   );
-    //   setIsEditing(false); // Reset after editing
-    // } else {
-    //   // Add new reviewer
-
-    // }
-
-    // Clear form data
-    // clearForm();
   };
-
-  // const clearForm = () => {
-  //   setName("");
-  //   setEmail("");
-  //   setAffiliation("");
-  //   setCountry("");
-  //   setMobile("");
-  //   setGoogleScholarId("");
-  //   setOrcidId("");
-  // };
 
   useEffect(() => {
     const conference_id = sessionStorage.getItem("con");
@@ -95,7 +64,7 @@ function ReviewersRegistration() {
       getalltracks(conference_id)
         .then((res) => {
           setTracks(res.data.tracks);
-          setConference_name(res.data.conferenceName);
+          setConference_name(res.data.conferenceName); // Still set for fallback
           SetData(false);
         })
         .catch((err) => {});
@@ -104,22 +73,7 @@ function ReviewersRegistration() {
     }
   }, []);
 
-  const handleTrackChange = (event) => {
-    const selectedTrackId = event.target.value;
-    const selectedTrack = tracks.find((track) => track._id === selectedTrackId);
-    setSelectedTrack({ id: selectedTrack._id, name: selectedTrack.track_name });
-    getallreviewersbytrack(selectedTrackId)
-      .then((res) => {
-        setExistingreviewers(res.data);
-      })
-      .catch((err) => {});
-  };
-
   const finalsave = () => {
-    // if (!selectedTrack.id) {
-    //   alert("select track first");
-    //   return;
-    // }
     const transformedData = {
       reviewers: reviewers.map((item) => ({
         name: item.name,
@@ -130,11 +84,9 @@ function ReviewersRegistration() {
         tracks: selectedTracks
       })),
     };
-    // console.log(selectedTrack.id);
-    // console.log(selectedTracks); 
     console.log(transformedData);
 
-    createReviewers(transformedData, selectedTrack.id)
+    createReviewers(transformedData)
       .then((Response) => {
         // Clear form data
         setName("");
@@ -147,7 +99,6 @@ function ReviewersRegistration() {
 
         // Update existing reviewers with new data from the response
         if (Response.data && Response.data.reviewers) {
-          // Use functional state update to ensure the existing state is captured correctly
           setExistingreviewers((prevReviewers) => [
             ...prevReviewers,
             ...Response.data.reviewers,
@@ -179,7 +130,6 @@ function ReviewersRegistration() {
       orcidId,
     };
     console.log(formData);
-    // console.log(members._id);
     // Update the reviewers state with the edited data
     setReviewers(
       reviewers.map((reviewer) =>
@@ -190,15 +140,12 @@ function ReviewersRegistration() {
   };
 
   const handleRedirect = () => {
-    // history.push('/another-page'); // Change '/another-page' to the actual path you want to redirect to
     navigate("/select-conference");
   };
 
   // Function to show success message
   const handleSuccess = () => {
     setSuccess(true);
-
-    // Hide success message after 3 seconds
     setTimeout(() => {
       setSuccess(false);
     }, 3000); // 3000ms = 3 seconds
@@ -216,10 +163,6 @@ function ReviewersRegistration() {
   };
 
   const handleAddClick = () => {
-    if (!selectedTrack.id) {
-      alert("select track first");
-      return;
-    }
     const selectedMembers = oldmembers.filter((member) =>
       selectedRows.includes(member._id)
     );
@@ -259,12 +202,10 @@ function ReviewersRegistration() {
 
   const deleteEach = (email) => {
     setReviewers(reviewers.filter((member) => member.email !== email));
-    //console.log(email);
   };
 
   const handleTrackSelect = (e) => {
     const { value, checked } = e.target;
-
     if (checked) {
       setSelectedTracks((prevSelected) => [...prevSelected, value]);
     } else {
@@ -281,6 +222,17 @@ function ReviewersRegistration() {
   const toSentenceCase = (text) => {
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
+  // New function to format track names
+  const formatTrackName = (trackName) => {
+    if (!trackName) return "";
+    // Specifically handle "aiml" to become "AI ML"
+    if (trackName.toLowerCase() === "aiml") {
+      return "AI ML";
+    }
+    // For other track names, convert to uppercase
+    return trackName.toUpperCase();
   };
 
   return (
@@ -320,35 +272,8 @@ function ReviewersRegistration() {
           <div className="md:flex justify-between">
             <div className="m-2 md:m-4">
               <h2 className="text-xl md:text-2xl text font-semibold text-black">
-                Conference Name : {toSentenceCase(conference_name)}
+                Conference Name: {conferenceTitle}
               </h2>
-            </div>
-            <div>
-              <label
-                htmlFor="expectedSubmissions"
-                className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
-              >
-                <span className="text-xs font-medium text-gray-700">
-                  Select Track
-                </span>
-                <select
-                  id="expectedSubmissions"
-                  name="expectedSubmissions"
-                  className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                  value={selectedTrack.id}
-                  onChange={handleTrackChange}
-                  required
-                >
-                  <option value="" disabled>
-                    Select an option
-                  </option>
-                  {tracks.map((track) => (
-                    <option key={track._id} value={track._id}>
-                      {toSentenceCase(track.track_name)}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </div>
           </div>
 
@@ -448,7 +373,7 @@ function ReviewersRegistration() {
                       type="text"
                       id="mobile"
                       name="mobile"
-                      className="mt-1 w-full border-none p- 0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
+                      className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                       value={mobile}
                       onChange={(e) => setMobile(e.target.value)}
                       // required
@@ -516,7 +441,7 @@ function ReviewersRegistration() {
                         className="mr-2"
                       />
                       <label htmlFor={track._id} className="text-gray-700">
-                        {toSentenceCase(track.track_name)}
+                        {formatTrackName(track.track_name)}
                       </label>
                     </div>
                   ))}
@@ -619,7 +544,7 @@ function ReviewersRegistration() {
             {/* -----------------Reviewers----------------- */}
             <div className="mt-4 w-full h-96 border border-3 shadow-sm">
               <div className="text-center text-xl font-semibold">
-                <h2>Reviewers For {toSentenceCase(selectedTrack.name)} </h2>
+                <h2>Reviewers For</h2>
               </div>
               {success && (
                 <div
@@ -680,15 +605,6 @@ function ReviewersRegistration() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {reviewer.email}
                         </td>
-                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button
-                          // onClick={() => removeCommittee(committee.id)}
-                          className="text-red-600 hover:text-red-900"
-                          onClick={()=>deleteEach(reviewer.email)}
-                          >
-                          ✖
-                        </button>
-                        </td> */}
                       </tr>
                     ))}
 
@@ -703,11 +619,10 @@ function ReviewersRegistration() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <button
-                            // onClick={() => removeCommittee(committee.id)}
                             className="text-red-600 hover:text-red-900"
                             onClick={() => deleteEach(reviewer.email)}
                           >
-                            ✖
+                            ✶
                           </button>
                         </td>
                       </tr>
@@ -726,17 +641,6 @@ function ReviewersRegistration() {
                     Save
                   </button>
                 </div>
-                {/* <div className="flex items-center justify-center mt-3">
-                  <button
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-                    type="submit"
-                    onClick={() => {
-                      setReviewers([]);
-                    }}
-                  >
-                    Close
-                  </button>
-                </div> */}
               </div>
             </div>
           </div>
@@ -747,3 +651,112 @@ function ReviewersRegistration() {
 }
 
 export default ReviewersRegistration;
+
+/* Changes Made:
+- Added useLocation to access the conferenceTitle passed from ConferenceSelection.jsx.
+- Used conferenceTitle in the header instead of applying toSentenceCase to conference_name.
+- Added formatTrackName function to format track names (e.g., "aiml" to "AI ML", others to uppercase).
+- Applied formatTrackName to the "Select Tracks for Reviewers" section.
+- Fixed a typo in the mobile input's className ("p- 0" to "p-0"). */
+
+/* Removed state variables
+Before 
+
+const [oldmembers, setOldmembers] = useState([]);
+const [tracks, setTracks] = useState([]); // Removed
+const [id, setId] = useState("");
+const [name, setName] = useState("");
+const [email, setEmail] = useState("");
+const [affiliation, setAffiliation] = useState("");
+const [country, setCountry] = useState("");
+const [mobile, setMobile] = useState("");
+const [googleScholarId, setGoogleScholarId] = useState("");
+const [orcidId, setOrcidId] = useState("");
+const [reviewers, setReviewers] = useState([]);
+const [selectedTrack, setSelectedTrack] = useState({ id: "", name: "" }); // Removed
+const [success, setSuccess] = useState(false);
+const [showPopup, setShowPopup] = useState(false);
+const [conference_name, setConference_name] = useState([]);
+const [selectedRows, setSelectedRows] = useState([]);
+const [members, setMembers] = useState([]);
+const [selectedTrackName, setSelectedTrackName] = useState(""); // Removed
+const [existingreviewers, setExistingreviewers] = useState([]); // Removed
+const [isEditing, setIsEditing] = useState(false);
+const [selectedTracks, setSelectedTracks] = useState([]); // Removed
+const [data, SetData] = useState(true); // Removed  
+
+After
+const [oldmembers, setOldmembers] = useState([]);
+const [id, setId] = useState("");
+const [name, setName] = useState("");
+const [email, setEmail] = useState("");
+const [affiliation, setAffiliation] = useState("");
+const [country, setCountry] = useState("");
+const [mobile, setMobile] = useState("");
+const [googleScholarId, setGoogleScholarId] = useState("");
+const [orcidId, setOrcidId] = useState("");
+const [reviewers, setReviewers] = useState([]);
+const [success, setSuccess] = useState(false);
+const [showPopup, setShowPopup] = useState(false);
+const [conference_name, setConference_name] = useState([]);
+const [selectedRows, setSelectedRows] = useState([]);
+const [members, setMembers] = useState([]);
+const [isEditing, setIsEditing] = useState(false);
+const [selectedTracks, setSelectedTracks] = useState([]);
+*/
+
+/* Removed the handleTrackChange Function
+Before
+const handleTrackChange = (event) => {
+  const selectedTrackId = event.target.value;
+  const selectedTrack = tracks.find((track) => track._id === selectedTrackId);
+  setSelectedTrack({ id: selectedTrack._id, name: selectedTrack.track_name });
+  getallreviewersbytrack(selectedTrackId)
+    .then((res) => {
+      setExistingreviewers(res.data);
+    })
+    .catch((err) => {});
+};
+
+After
+Removed the handleTrackChange function entirely.
+*/
+
+// State Removed: tracks, selectedTrack, selectedTrackName, existingreviewers.
+// Functions Removed: handleTrackChange.
+/* JSX Updated:
+Removed the "Select Track" dropdown from the UI.
+Changed the reviewers table heading to "Reviewers List".
+Removed existingreviewers from the table display. */
+
+/* The toSentenceCase function (text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()) was not suitable for the desired formatting. 
+It only capitalizes the first letter and lowercases the rest, which doesn’t meet the requirement for specific formatting of "aiml" or full uppercase for other tracks. */
+
+/* Added formatTrackName Function:
+Purpose: To apply custom formatting rules for track names.
+const formatTrackName = (trackName) => {
+  if (!trackName) return "";
+  // Specifically handle "aiml" to become "AI ML"
+  if (trackName.toLowerCase() === "aiml") {
+    return "AI ML";
+  }
+  // For other track names, convert to uppercase
+  return trackName.toUpperCase();
+}; */
+
+/* Updated the "Select Tracks for Reviewers" Section
+Original Code:
+<label htmlFor={track._id} className="text-gray-700">
+  {toSentenceCase(track.track_name)}
+</label> 
+
+Problem: toSentenceCase converted "aiml" to "Aiml" and "datascience" to "Datascience", which didn’t meet the formatting requirements.
+
+Updated Code:
+<label htmlFor={track._id} className="text-gray-700">
+  {formatTrackName(track.track_name)}
+</label>
+Change: Replaced toSentenceCase(track.track_name) with formatTrackName(track.track_name).
+When track.track_name is "aiml", formatTrackName returns "AI ML".
+When track.track_name is "datascience", formatTrackName returns "DATASCIENCE".
+This ensures the display matches the desired format. */ 

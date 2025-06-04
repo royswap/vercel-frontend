@@ -103,7 +103,41 @@ function ListCommittee() {
 
   const toSentenceCase = (text) => {
     if (!text) return "";
-    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    // Split the text into words
+    const words = text.split(' ');
+    // Capitalize the first letter of the first word
+    if (words.length > 0) {
+      words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase();
+    }
+    // Process each word to handle specific acronyms
+    return words
+      .map((word) => {
+        const lowerWord = word.toLowerCase();
+        if (lowerWord === 'ai') return 'AI';
+        if (lowerWord === 'ml') return 'ML';
+        // If the word is already in the desired case (e.g., "AI" or "ML"), preserve it
+        if (word === 'AI' || word === 'ML') return word;
+        // Otherwise, lowercase the word (except for the first word, which is already handled)
+        return word.toLowerCase();
+      })
+      .join(' ');
+  };
+
+  // Function to format conference name in proper title case
+  const toTitleCase = (str) => {
+    if (!str) return '';
+    const minorWords = ['on', 'and', 'the', 'in', 'of', 'for', 'with'];
+    return str
+      .toLowerCase()
+      .split(' ')
+      .map((word, index) => {
+        if (word === 'ai') return 'AI'; // Special case for "AI"
+        if (index === 0 || !minorWords.includes(word)) {
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        return word;
+      })
+      .join(' ');
   };
 
   // Export to Excel
@@ -208,7 +242,7 @@ function ListCommittee() {
 
             <div className="w-full m-6">
               <h2 className="text-2xl text font-semibold text-black">
-                Conference Name : {toSentenceCase(conference_name)}
+                Conference Name: {toTitleCase(conference_name)}
               </h2>
             </div>
 

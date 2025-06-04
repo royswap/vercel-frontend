@@ -76,6 +76,23 @@ function CommitteewiseMembers() {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  // Added function to format conference name in proper title case
+  const toTitleCase = (str) => {
+    if (!str) return "";
+    const minorWords = ["on", "and", "the", "in", "of", "for", "with"];
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word, index) => {
+        if (word === "ai") return "AI"; // Special case for "AI"
+        if (index === 0 || !minorWords.includes(word)) {
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        return word;
+      })
+      .join(" ");
+  };
+
   // Filtered data based on search term
   const filteredMembers = existingmambers.filter((member) =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -168,7 +185,7 @@ function CommitteewiseMembers() {
         <>
           <div className="m-2 md:m-4 flex justify-between items-center">
             <h2 className="text-xl md:text-2xl font-semibold text-black">
-              Conference Name: {toSentenceCase(conference_name)}
+              Conference Name: {toTitleCase(conference_name)} {/* Updated to use toTitleCase */}
             </h2>
             <input
               type="text"
@@ -180,7 +197,7 @@ function CommitteewiseMembers() {
           </div>
 
           <div>
- <label
+            <label
               htmlFor="expectedSubmissions"
               className="block text-2xl font-medium text-gray-700 m-2 md:m-4"
             >

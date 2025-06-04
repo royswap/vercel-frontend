@@ -36,6 +36,7 @@ function MemberRegistration() {
   const [editMode, setEditMode] = useState(false);
   const [editedMember, setEditedMember] = useState({});
   const [isEditing, setIsEditing] = useState(false);
+  const [updateMessage, setUpdateMessage] = useState(''); // Added for success message
 
   const navigate = useNavigate();
 
@@ -48,7 +49,7 @@ function MemberRegistration() {
           setConference_name(res.data.conferenceName);
           // console.log(res.data);
           SetData(false);
-          setTemp(0);
+          // setTemp(0); // Removed because 'temp' state is not defined
         })
         .catch((err) => {});
     } else {
@@ -121,7 +122,6 @@ function MemberRegistration() {
         setRole("");
         setMembers([]);
 
-
         // Update existing reviewers with new data from the response
         if (Response.data && Response.data.members) {
           // Use functional state update to ensure the existing state is captured correctly
@@ -170,7 +170,7 @@ function MemberRegistration() {
     }).catch((err) => {
       console.log(err);
     });
-  }
+  };
 
   const getoldmembers = () => {
     const conference_id = sessionStorage.getItem("con");
@@ -179,13 +179,10 @@ function MemberRegistration() {
         .then((res) => {
           setOldmembers(res.data);
           console.log(res.data);
-          
         })
         .catch((err) => {});
     }
   };
-
-  
 
   const handleOldMembers = () => {
     const selectedData = oldmembers.filter((member) =>
@@ -253,6 +250,23 @@ function MemberRegistration() {
   const toSentenceCase = (text) => {
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
+  // Added function to format conference name in proper title case
+  const toTitleCase = (str) => {
+    if (!str) return "";
+    const minorWords = ["on", "and", "the", "in", "of", "for", "with"];
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word, index) => {
+        if (word === "ai") return "AI"; // Special case for "AI"
+        if (index === 0 || !minorWords.includes(word)) {
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        return word;
+      })
+      .join(" ");
   };
 
   const handleMemberDetails = (member) => {
@@ -371,7 +385,7 @@ function MemberRegistration() {
           <div className="md:flex justify-between">
             <div className="m-2 md:m-4">
               <h2 className="text-xl md:text-2xl text font-semibold text-black">
-                Conference Name : {toSentenceCase(conference_name)}
+                Conference Name: {toTitleCase(conference_name)} {/* Updated to use toTitleCase */}
               </h2>
             </div>
             <div>
@@ -578,7 +592,7 @@ function MemberRegistration() {
                     className="block overflow-hidden rounded-md border border-gray-200 px-3 py-2 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
                   >
                     <span className="text-xs font-medium text-gray-700">
-                      Role<span style={{ color: "red" }}>*</span>
+                      Role,<span style={{ color: "red" }}>*</span>
                     </span>
                     <input
                       type="text"
@@ -713,6 +727,27 @@ function MemberRegistration() {
                   successfully!
                 </div>
               )}
+              {updateMessage && (
+                <div
+                  className="flex items-center justify-center p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200 dark:text-green-800"
+                  role="alert"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="w-5 h-5 mr-3"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-4.293-3.707a1 1 0 00-1.414 0L9 9.586 7.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l5-5a1 1 0 000-1.414z"
+                      clipRule="evenodd"
+                    ></path>
+                  </svg>
+                  <span className="font-medium">Success!</span> {updateMessage}
+                </div>
+              )}
               <div className="mt-2  w-full h-72 overflow-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -753,7 +788,7 @@ function MemberRegistration() {
                           className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 cursor-pointer"
                           onClick={() => handleDeleteClick(member._id)}
                         >
-                          ✖
+                          ✶
                         </td>
                       </tr>
                     ))}
@@ -772,7 +807,7 @@ function MemberRegistration() {
                             className="text-red-600 hover:text-red-900"
                             onClick={() => deleteEach(member.email)}
                           >
-                            ✖
+                            ✶
                           </button>
                         </td>
                       </tr>

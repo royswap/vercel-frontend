@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // Add useLocation to retrieve state
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   createAuthorWork,
   fetchauthorwork,
@@ -9,8 +9,7 @@ import {
 import homeIcon from "../assets/home36.png";
 
 const AuthorRegistration = () => {
-  const location = useLocation(); // Add this to access the navigation state
-  const conferenceTitle = location.state?.conferenceTitle || "No Conference Selected"; // Retrieve the conference title, with a fallback
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [editPaper, seteditPaper] = useState(false);
   const [tracks, setTracks] = useState([]);
@@ -63,7 +62,7 @@ const AuthorRegistration = () => {
   const [keywordsLimitError, setKeywordsLimitError] = useState(false);
   const [abstractLimitError, setAbstractLimitError] = useState(false);
   const [pdfFileTypeError, setPdfFileTypeError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // Added state for error message
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [paperDetails, setPaperDetails] = useState({});
 
@@ -72,21 +71,18 @@ const AuthorRegistration = () => {
       ? paperDetails.track.track_name
       : "Select Track";
 
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
 
-  // Debug errorMessage state changes
   useEffect(() => {
     if (errorMessage) {
       console.log("errorMessage updated to:", errorMessage);
     }
   }, [errorMessage]);
 
-  // Debug component re-renders
   useEffect(() => {
     console.log("Component re-rendered, errorMessage is:", errorMessage);
   });
 
-  // Load saved data from localStorage when the component mounts
   useEffect(() => {
     const savedData = localStorage.getItem('savedFormData');
     if (savedData) {
@@ -114,8 +110,6 @@ const AuthorRegistration = () => {
         },
       ]);
       setIsCorrespondingAuthor(parsedData.isCorrespondingAuthor || false);
-      // Note: pdfFile cannot be restored from localStorage
-      // Update word counts for loaded data
       setKeywordsWordCount(countWords(parsedData.keywords || ""));
       setAbstractWordCount(countWords(parsedData.abstract || ""));
     }
@@ -170,12 +164,12 @@ const AuthorRegistration = () => {
       const fileExtension = file.name.split('.').pop().toLowerCase();
       if (fileExtension !== 'pdf') {
         setPdfFileTypeError(true);
-        setPdfFile(null); // Clear the file if it's not a PDF
+        setPdfFile(null);
         setErrors((prev) => ({ ...prev, pdfFile: "Please upload a PDF file only." }));
       } else {
         setPdfFileTypeError(false);
         setPdfFile(file);
-        setErrors((prev) => ({ ...prev, pdfFile: "" })); // Clear any existing PDF error
+        setErrors((prev) => ({ ...prev, pdfFile: "" }));
       }
     } else {
       setPdfFileTypeError(false);
@@ -202,7 +196,6 @@ const AuthorRegistration = () => {
     if (abstractWordCount > 1000) newErrors.abstract = "Abstract exceeds 1000 words.";
     if (pdfFileTypeError) newErrors.pdfFile = "Please upload a PDF file only.";
 
-    // Check for mandatory fields and display error message
     const mandatoryFieldsMissing = !name || !affiliation || !country || !email || !title || !track || !keywords || !abstract || !pdfFile;
     if (mandatoryFieldsMissing) {
       setTimeout(() => {
@@ -294,7 +287,7 @@ const AuthorRegistration = () => {
   };
 
   const redirectToHome = () => {
-    navigate("/select-conference"); //redirection by home icon
+    navigate("/select-conference");
   };
 
   const handleGoButtonClick = () => {
@@ -313,7 +306,6 @@ const AuthorRegistration = () => {
         setKeywords(Response.data.keywords);
         setAbstract(Response.data.abstract);
         seteditPaper(true);
-        // Update word counts for fetched data
         setKeywordsWordCount(countWords(Response.data.keywords));
         setAbstractWordCount(countWords(Response.data.abstract));
       })
@@ -358,7 +350,6 @@ const AuthorRegistration = () => {
     if (abstractWordCount > 1000) newErrors.abstract = "Abstract exceeds 1000 words.";
     if (pdfFileTypeError) newErrors.pdfFile = "Please upload a PDF file only.";
 
-    // Check for mandatory fields and display error message
     const mandatoryFieldsMissing = !name || !affiliation || !country || !email || !title || !track || !keywords || !abstract || (paperDetails.pdfLink ? false : !pdfFile);
     if (mandatoryFieldsMissing) {
       setTimeout(() => {
@@ -405,7 +396,7 @@ const AuthorRegistration = () => {
       .then((res) => {
         alert("Paper details updated successfully.");
         console.log(res.data);
-        seteditPaper(true); // Disable editing after saving changes
+        seteditPaper(true);
       })
       .catch((err) => {
         console.error("Error updating paper details:", err);
@@ -449,7 +440,6 @@ const AuthorRegistration = () => {
       <div className="flex justify-center">
         <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50 max-w-5xl mt-5">
           <div className="bg-white shadow-md rounded-lg p-6">
-            {/* Home Icon */}
             <div className="w-full flex justify-between items-center mb-4">
               <img
                 src={homeIcon}
@@ -480,12 +470,10 @@ const AuthorRegistration = () => {
             )}
             <div className="flex items-center justify-center text-4xl mb-4">
               <div className="text-center">
-                <h1 className="text-4xl mb-2">{conferenceTitle}</h1> {/* Display the conference title */}
                 <u className="text-4xl">Submit Paper and Edit</u>
               </div>
             </div>
 
-            {/* Display error message if mandatory fields are missing */}
             {errorMessage && (
               <div
                 className="text-red-500 text-center mb-4"
@@ -497,7 +485,6 @@ const AuthorRegistration = () => {
 
             {paperDetails && !editPaper ? (
               <form onSubmit={handleFormEdit}>
-                {/*Ppaer ID Search and Go button*/}
                 <label className="block text-gray-700">Paper Id:</label>
                 <div className="flex items-center">
                   <input
@@ -516,7 +503,6 @@ const AuthorRegistration = () => {
                   </button>
                 </div>
 
-                {/* Name */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Name: <span className="text-red-500">*</span>
@@ -548,7 +534,6 @@ const AuthorRegistration = () => {
                     <p className="text-red-500 text-xs italic">{errors.name}</p>
                   )}
                 </div>
-                {/* Affiliation */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Affiliation: <span className="text-red-500">*</span>
@@ -567,7 +552,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Country */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Country: <span className="text-red-500">*</span>
@@ -587,7 +571,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Contact Number */}
                 <div className="mb-4">
                   <label className="block text-gray-700">Contact Number:</label>
                   <input
@@ -605,7 +588,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Email */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Email: <span className="text-red-500">*</span>
@@ -625,7 +607,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Google Scholar ID */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Google Scholar ID (Optional):
@@ -638,7 +619,6 @@ const AuthorRegistration = () => {
                     disabled={editPaper}
                   />
                 </div>
-                {/* ORCID ID */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     ORCID ID (Optional):
@@ -651,7 +631,6 @@ const AuthorRegistration = () => {
                     disabled={editPaper}
                   />
                 </div>
-                {/* Title */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Title: <span className="text-red-500">*</span>
@@ -670,7 +649,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Track */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Track: <span className="text-red-500">*</span>
@@ -700,7 +678,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Keywords */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Keywords: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 5 words)</span>
@@ -724,7 +701,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Abstract */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Abstract: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 1000 words)</span>
@@ -748,9 +724,8 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* PDF File */}
                 <div className="mb-4 flex flex-col">
-                  <label className="block text-red-500">
+                  <label className="block text-gray-700">
                     PDF File only: <span className="text-red-500">*</span>
                   </label>
                   {paperDetails.pdfLink && (
@@ -784,7 +759,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Co-Authors */}
                 <div className="mb-4">
                   <label className="block text-gray-700">Co-Authors:</label>
                   {paperDetails.co_authors
@@ -976,7 +950,7 @@ const AuthorRegistration = () => {
 
                   <button
                     type="button"
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     onClick={handleAddCoAuthor}
                     disabled={editPaper}
                   >
@@ -985,7 +959,6 @@ const AuthorRegistration = () => {
                 </div>
 
                 <div className="flex justify-center md:space-x-6 md:gap-4">
-                  {/* Submit or Edit Button */}
                   <button
                     type="submit"
                     className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
@@ -1018,7 +991,6 @@ const AuthorRegistration = () => {
               </form>
             ) : (
               <form onSubmit={handleFormSubmit}>
-                {/*Ppaer ID Search and Go button*/}
                 <label className="block text-gray-700">Paper Id:</label>
                 <div className="flex items-center">
                   <input
@@ -1036,13 +1008,12 @@ const AuthorRegistration = () => {
                         : "border border-gray-400 bg-gray-400 text-gray-700 cursor-not-allowed"
                     }`}
                     onClick={handleGoButtonClick}
-                    disabled={!paperID} // Disable button if paperID is empty
+                    disabled={!paperID}
                   >
                     Go
                   </button>
                 </div>
 
-                {/* Name */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Name: <span className="text-red-500">*</span>
@@ -1074,7 +1045,6 @@ const AuthorRegistration = () => {
                     <p className="text-red-500 text-xs italic">{errors.name}</p>
                   )}
                 </div>
-                {/* Affiliation */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Affiliation: <span className="text-red-500">*</span>
@@ -1093,7 +1063,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Country */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Country: <span className="text-red-500">*</span>
@@ -1108,12 +1077,9 @@ const AuthorRegistration = () => {
                     disabled={editPaper}
                   />
                   {errors.country && (
-                    <p className="text-red-500 text-xs italic">
-                      {errors.country}
-                    </p>
+                    <p className="text-red-500 text-xs italic">{errors.country}</p>
                   )}
                 </div>
-                {/* Contact Number */}
                 <div className="mb-4">
                   <label className="block text-gray-700">Contact Number:</label>
                   <input
@@ -1131,7 +1097,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Email */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Email: <span className="text-red-500">*</span>
@@ -1151,7 +1116,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Google Scholar ID */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Google Scholar ID (Optional):
@@ -1164,7 +1128,6 @@ const AuthorRegistration = () => {
                     disabled={editPaper}
                   />
                 </div>
-                {/* ORCID ID */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     ORCID ID (Optional):
@@ -1177,7 +1140,6 @@ const AuthorRegistration = () => {
                     disabled={editPaper}
                   />
                 </div>
-                {/* Title */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Title: <span className="text-red-500">*</span>
@@ -1196,7 +1158,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Track */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Track: <span className="text-red-500">*</span>
@@ -1226,7 +1187,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Keywords */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Keywords: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 5 words)</span>
@@ -1250,7 +1210,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Abstract */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Abstract: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 1000 words)</span>
@@ -1274,9 +1233,8 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* PDF File */}
                 <div className="mb-4 flex flex-col">
-                  <label className="block text-red-500">
+                  <label className="block text-gray-700">
                     PDF File only: <span className="text-red-500">*</span>
                   </label>
                   {paperDetails.pdfLink && (
@@ -1310,7 +1268,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Co-Authors */}
                 <div className="mb-4">
                   <label className="block text-gray-700">Co-Authors:</label>
                   {paperDetails.co_authors
@@ -1321,7 +1278,7 @@ const AuthorRegistration = () => {
                         >
                           <input
                             type="text"
-                            className="form-input mt-1 block w-1/ 2 border border-gray-300"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Name"
                             value={coAuthor.name}
                             onChange={(e) =>
@@ -1391,7 +1348,7 @@ const AuthorRegistration = () => {
                           />
                           <button
                             type="button"
-                            className="border rounded border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                            className="border rounded border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                             onClick={() => handleDeleteCoAuthor(index)}
                             disabled={editPaper}
                           >
@@ -1490,7 +1447,7 @@ const AuthorRegistration = () => {
                             </label>
                             <button
                               type="button"
-                              className="border rounded border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                              className="border rounded border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                               onClick={() => handleDeleteCoAuthor(index)}
                               disabled={editPaper}
                             >
@@ -1502,7 +1459,7 @@ const AuthorRegistration = () => {
 
                   <button
                     type="button"
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px- dobb7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     onClick={handleAddCoAuthor}
                     disabled={editPaper}
                   >
@@ -1511,13 +1468,12 @@ const AuthorRegistration = () => {
                 </div>
 
                 <div className="flex justify-center md:space-x-6 md:gap-4">
-                  {/* Submit or Edit Button */}
                   <button
                     type="submit"
                     className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     disabled={loading}
                   >
-                    {loading ? "Submit" : "Submit"}
+                    {loading ? "Submitting..." : "Submit"}
                   </button>
                   <button
                     type="button"
@@ -1554,34 +1510,3 @@ const AuthorRegistration = () => {
 
 export default AuthorRegistration;
 
-/* Edit Form (<form onSubmit={handleFormEdit}>):
-Added a "Withdraw Paper" button in the div with class flex justify center md:space-x-6 md:gap-4, after the "Edit" button.
-The button triggers handleWithdrawButtonClick, which calls the withdrawPaper function with the paperID to withdraw the paper. */
-
-/* Submission Form (<form onSubmit={handleFormSubmit}>):
-Added a "Withdraw Paper" button in the same div, after the "Edit" button, but it’s conditionally rendered only if paperID exists ({paperID && ...}).
-It also triggers handleWithdrawButtonClick to withdraw the paper. */
-
-/* In short,
-Added Edit, Save button to the form to toggle edit mode using handleEditToggle, and Withdraw Paper buttons to withdraw papers using handleWithdrawButtonClick */
-
-/* To remove the "Select Conference" field, modified the file by deleting the <select> element and its associated logic. Specifically:
-Removed the <select> dropdown for "Select Conference" from the JSX, which was located in the top right corner.
-Removed the conferences state and its useEffect hook that fetched conference data.
-Removed the handleConferenceChange function, which handled conference selection changes.
-Removed "Select Conference" dropdown, conferences state, useEffect for fetching conferences, and handleConferenceChange function to simplify the form. */
-
-/* To ensure the form accepts only PDF files and rejects Word or PPT files, the following changes:
-Added validation in the handlePdfFileChange function to check the file extension using file.name.split('.').pop().toLowerCase().
-If the extension isn't 'pdf', set pdfFileTypeError to true, clear the pdfFile state, and display an error message: "Please upload a PDF file only."
-Updated the form validation in handleFormSubmit and handleFormEdit to include pdfFileTypeError in the errors check, preventing submission if a non-PDF file is uploaded. 
-Added PDF-only validation in handlePdfFileChange by checking file extension, setting pdfFileTypeError, and updating form validation to reject non-PDF files (e.g., Word, PPT).*/
-
-/* To make fields like Name, Affiliation, Country, Email, Title, Track, Keywords, Abstract, and PDF mandatory, and to display an error message when they're missing, the following changes:
-Added validation logic in handleFormSubmit and handleFormEdit to check if mandatory fields (name, affiliation, country, email, title, track, keywords, abstract, pdfFile) are empty using const mandatoryFieldsMissing = !name || !affiliation || ....
-If mandatoryFieldsMissing is true, set an error message using setErrorMessage("Mandatory fields are required") and prevent form submission with a return.
-Added a conditional rendering in the JSX to display the error message: {errorMessage && <div className="text-red-500 text-center mb-4">{errorMessage}</div>}.
-Added individual error messages for each field in the errors state (e.g., if (!name) newErrors.name = "Name is required.";) to show specific feedback below each field. 
-Added mandatory field validation for Name, Affiliation, Country, Email, Title, Track, Keywords, Abstract, PDF in handleFormSubmit and handleFormEdit; set errorMessage state and displayed "Mandatory fields are required" if missing. */
-
-//Done

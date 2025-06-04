@@ -161,6 +161,23 @@ function Committee() {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  // Added function to format conference name in proper title case
+  const toTitleCase = (str) => {
+    if (!str) return "";
+    const minorWords = ["on", "and", "the", "in", "of", "for", "with"];
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word, index) => {
+        if (word === "ai") return "AI"; // Special case for "AI"
+        if (index === 0 || !minorWords.includes(word)) {
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        return word;
+      })
+      .join(" ");
+  };
+
   return (
     <div className='w-full h-full border border-3 shadow-sm p-3 mt-2 mb-5 bg-body-tertiary rounded bg-slate-50'>
       {/* Home Icon and Title */}
@@ -240,7 +257,7 @@ function Committee() {
             )}
           </div>
           <div className='w-full m-6'>
-            <h2 className='text-2xl text font-semibold text-black'>Conference Name : {toSentenceCase(conference_name)}</h2>
+            <h2 className='text-2xl text font-semibold text-black'>Conference Name : {toTitleCase(conference_name)}</h2> {/* Updated to use toTitleCase */}
           </div>
           <div className='w-full md:flex'>
             {/* for form */}

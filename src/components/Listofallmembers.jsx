@@ -63,6 +63,23 @@ function Listofallmembers() {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  // Added function to format conference name in proper title case
+  const toTitleCase = (str) => {
+    if (!str) return "";
+    const minorWords = ["on", "and", "the", "in", "of", "for", "with"];
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word, index) => {
+        if (word === "ai") return "AI"; // Special case for "AI"
+        if (index === 0 || !minorWords.includes(word)) {
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        return word;
+      })
+      .join(" ");
+  };
+
   // Create a mapping of committee IDs to names
   const committeeMap = {};
   committees.forEach((committee) => {
@@ -163,7 +180,7 @@ function Listofallmembers() {
           <div className="md:flex justify-between">
             <div className="m-2 md:m-4">
               <h2 className="text-xl md:text-2xl font-semibold text-black">
-                Conference Name: {toSentenceCase(conference_name)}
+                Conference Name: {toTitleCase(conference_name)} {/* Updated to use toTitleCase */}
               </h2>
             </div>
             <div className="m-2 md:m-4">

@@ -103,28 +103,6 @@ function TrackRegistration() {
     navigate('/select-conference'); //redirection by home icon 
   };
 
-  const toSentenceCase = (text) => {
-    if (!text) return '';
-    // Split the text into words
-    const words = text.split(' ');
-    // Capitalize the first letter of the first word
-    if (words.length > 0) {
-      words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase();
-    }
-    // Process each word to handle specific acronyms
-    return words
-      .map((word) => {
-        const lowerWord = word.toLowerCase();
-        if (lowerWord === 'ai') return 'AI';
-        if (lowerWord === 'ml') return 'ML';
-        // If the word is already in the desired case (e.g., "AI" or "ML"), preserve it
-        if (word === 'AI' || word === 'ML') return word;
-        // Otherwise, lowercase the word (except for the first word, which is already handled)
-        return word.toLowerCase();
-      })
-      .join(' ');
-  };
-
   // Function to format conference name in proper title case
   const toTitleCase = (str) => {
     if (!str) return '';
@@ -228,7 +206,7 @@ function TrackRegistration() {
             <ul className="p-4 space-y-2">
               {items.map((item, index) => (
                 <li key={index} className="flex justify-between items-center">
-                  <span>{toSentenceCase(item)}</span>
+                  <span>{item}</span>
                   <button
                     className="text-red-600 hover:text-red-800 text-2xl"
                     onClick={() => handleDeleteClick(index)}
@@ -269,7 +247,7 @@ function TrackRegistration() {
                 {tracks.map((track) => (
                   <tr key={track._id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {toSentenceCase(track.track_name)}
+                    {track.track_name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <button

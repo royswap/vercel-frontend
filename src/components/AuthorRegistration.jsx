@@ -5,7 +5,7 @@ import {
   fetchauthorwork,
   withdrawPaper,
   editAuthor,
-  getalltracks, // Added import for fetching tracks
+  getalltracks,
 } from "../services/ConferenceServices";
 import homeIcon from "../assets/home36.png";
 
@@ -64,14 +64,11 @@ const AuthorRegistration = () => {
   const [abstractLimitError, setAbstractLimitError] = useState(false);
   const [pdfFileTypeError, setPdfFileTypeError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [dataLoading, setDataLoading] = useState(true); // Added state for loading tracks
-
-  const [paperDetails, setPaperDetails] = useState({});
+  const [dataLoading, setDataLoading] = useState(true);
+  const [paperDetails, setPaperDetails] = useState(null);
 
   const defaultTrack =
-    paperDetails.track && paperDetails.track.track_name
-      ? paperDetails.track.track_name
-      : "Select Track";
+    paperDetails?.track?.track_name || "Select Track";
 
   const navigate = useNavigate();
 
@@ -88,11 +85,10 @@ const AuthorRegistration = () => {
   useEffect(() => {
     const conference_id = sessionStorage.getItem('con');
     if (conference_id) {
-      // Fetch tracks for the current conference
       getalltracks(conference_id)
         .then((res) => {
-          setTracks(res.data.tracks || []); // Populate tracks state
-          setDataLoading(false); // Set loading to false after fetching
+          setTracks(res.data.tracks || []);
+          setDataLoading(false);
         })
         .catch((err) => {
           console.error("Error fetching tracks:", err);
@@ -100,7 +96,7 @@ const AuthorRegistration = () => {
         });
     } else {
       setDataLoading(false);
-      setShowPopup(true); // Show popup if no conference_id
+      setShowPopup(true);
     }
   }, []);
 
@@ -148,8 +144,32 @@ const AuthorRegistration = () => {
   };
 
   const clearData = () => {
-    setName();
-    setEmail();
+    setName("");
+    setEmail("");
+    setAffiliation("");
+    setCountry("");
+    setContactNumber("");
+    setGooglescId("");
+    setOrchidId("");
+    setTitle("");
+    setTrack("");
+    setSelectedTrackId("");
+    setKeywords("");
+    setAbstract("");
+    setCoAuthors([
+      {
+        name: "",
+        email: "",
+        mobile: "",
+        affiliation: "",
+        country: "",
+        isCorresponding: false,
+      },
+    ]);
+    setIsCorrespondingAuthor(false);
+    setKeywordsWordCount(0);
+    setAbstractWordCount(0);
+    setPdfFile(null);
   };
 
   const countWords = (text) => {
@@ -207,13 +227,11 @@ const AuthorRegistration = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    console.log("gggggg");
 
     const newErrors = {};
     if (!name) newErrors.name = "Name is required.";
     if (!affiliation) newErrors.affiliation = "Affiliation is required.";
     if (!country) newErrors.country = "Country is required.";
-    if (!contactNumber) newErrors.contactNumber = "Contact number is required.";
     if (!email) newErrors.email = "Email is required.";
     if (!title) newErrors.title = "Title is required.";
     if (!track) newErrors.track = "Track is required.";
@@ -239,7 +257,6 @@ const AuthorRegistration = () => {
     }
 
     if (Object.keys(newErrors).length > 0) {
-      console.log("ddd");
       return;
     }
 
@@ -267,22 +284,27 @@ const AuthorRegistration = () => {
       isCorrespondingAuthor: isCorrespondingAuthor,
     };
 
-    setLoading(true);
-    createAuthorWork(authorWorkData, selectedTrackId, pdfFile)
-      .then((Response) => {
-        console.log(Response.data);
-        setPaperId(Response.data.paper_id);
-        setShowPopup(true);
-        clearData();
-        seteditPaper(true);
-      })
-      .catch((err) => {
-        alert(err.response.data.error);
-        console.log(err);
-      });
-    setLoading(false);
+    console.log("Submitting data to createAuthorWork:", {
+      authorWorkData,
+      selectedTrackId,
+      hasPdfFile: !!pdfFile,
+    });
 
-    console.log(authorWorkData);
+    setLoading(true);
+    try {
+      const response = await createAuthorWork(authorWorkData, selectedTrackId, pdfFile);
+      const newPaperId = response.data.paper_id;
+      console.log("New Paper ID after submission:", newPaperId);
+      setPaperId(newPaperId);
+      clearData();
+      seteditPaper(true);
+      navigate(`/paper-details/${newPaperId}`);
+    } catch (err) {
+      console.error("Error submitting paper:", err);
+      alert(err.response?.data?.error || "An error occurred while submitting the paper.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddCoAuthor = () => {
@@ -294,6 +316,7 @@ const AuthorRegistration = () => {
       country: "",
       googleScholarId: "",
       orchidId: "",
+      isCorresponding: false,
     };
     setCoAuthors([...CoAuthors, newCoAuthor]);
   };
@@ -319,28 +342,60 @@ const AuthorRegistration = () => {
   };
 
   const handleGoButtonClick = () => {
+    if (!paperID) {
+      alert("Please enter a valid Paper ID.");
+      return;
+    }
+
     fetchauthorwork(paperID)
-      .then((Response) => {
-        console.log(Response.data);
-        setPaperDetails(Response.data);
-        setName(Response.data.name);
-        setAffiliation(Response.data.affiliation);
-        setCountry(Response.data.country);
-        setContactNumber(Response.data.contact_no);
-        setEmail(Response.data.email);
-        setGooglescId(Response.data.google_sh_id);
-        setOrchidId(Response.data.orcid_id);
-        setTitle(Response.data.title);
-        setKeywords(Response.data.keywords);
-        setAbstract(Response.data.abstract);
+      .then((response) => {
+        const data = response.data;
+        if (!data) {
+          throw new Error("No paper found with this ID.");
+        }
+        console.log("Fetched Paper Details:", data);
+        setPaperDetails(data);
+        setName(data.name || "");
+        setAffiliation(data.affiliation || "");
+        setCountry(data.country || "");
+        setContactNumber(data.contact_no || "");
+        setEmail(data.email || "");
+        setGooglescId(data.google_sh_id || "");
+        setOrchidId(data.orcid_id || "");
+        setTitle(data.title || "");
+        setKeywords(data.keywords || "");
+        setAbstract(data.abstract || "");
+        setTrack(data.track?.track_name || "");
+        setSelectedTrackId(data.track?._id || "");
+        setCoAuthors(
+          data.co_authors?.map((coAuthor) => ({
+            name: coAuthor.name || "",
+            email: coAuthor.email || "",
+            mobile: coAuthor.contact_no || "",
+            affiliation: coAuthor.affiliation || "",
+            country: coAuthor.country || "",
+            isCorresponding: coAuthor.isCorrespondingAuthor || false,
+          })) || [
+            {
+              name: "",
+              email: "",
+              mobile: "",
+              affiliation: "",
+              country: "",
+              isCorresponding: false,
+            },
+          ]
+        );
+        setIsCorrespondingAuthor(data.isCorrespondingAuthor || false);
         seteditPaper(true);
-        setKeywordsWordCount(countWords(Response.data.keywords));
-        setAbstractWordCount(countWords(Response.data.abstract));
+        setKeywordsWordCount(countWords(data.keywords || ""));
+        setAbstractWordCount(countWords(data.abstract || ""));
       })
       .catch((err) => {
         console.error("Error fetching paper data:", err);
-      })
-      .catch(() => {});
+        alert("Failed to fetch paper details. Please check the Paper ID and try again.");
+        setPaperDetails(null);
+      });
   };
 
   const handleWithdrawButtonClick = () => {
@@ -348,15 +403,16 @@ const AuthorRegistration = () => {
       alert("Please enter a Paper ID to withdraw.");
       return;
     }
-    console.log(paperID);
 
     withdrawPaper(paperID)
       .then(() => {
         alert("Paper withdrawn successfully.");
+        setPaperDetails(null);
+        setPaperID("");
+        clearData();
       })
       .catch((error) => {
         console.error("Error withdrawing paper:", error);
-        setLoading(false);
         alert("An error occurred while withdrawing the paper.");
       });
   };
@@ -364,11 +420,20 @@ const AuthorRegistration = () => {
   const handleFormEdit = (e) => {
     e.preventDefault();
 
+    if (!paperDetails) {
+      alert("No paper details available to edit. Please fetch the paper first.");
+      return;
+    }
+
+    if (!paperID) {
+      alert("Paper ID is missing. Please ensure a valid Paper ID is provided.");
+      return;
+    }
+
     const newErrors = {};
     if (!name) newErrors.name = "Name is required.";
     if (!affiliation) newErrors.affiliation = "Affiliation is required.";
     if (!country) newErrors.country = "Country is required.";
-    if (!contactNumber) newErrors.contactNumber = "Contact number is required.";
     if (!email) newErrors.email = "Email is required.";
     if (!title) newErrors.title = "Title is required.";
     if (!track) newErrors.track = "Track is required.";
@@ -402,6 +467,7 @@ const AuthorRegistration = () => {
       country: coAuthor.country,
       contact_no: coAuthor.mobile,
       email: coAuthor.email,
+      isCorrespondingAuthor: coAuthor.isCorresponding,
     }));
 
     const authorWorkData = {
@@ -416,19 +482,31 @@ const AuthorRegistration = () => {
       keywords,
       abstract,
       co_authors: coAuthorsData,
+      isCorrespondingAuthor: isCorrespondingAuthor,
+      // Add track_id to ensure consistency with createAuthorWork
+      track_id: selectedTrackId,
     };
 
-    console.log("Changed Data:", authorWorkData);
+    console.log("Data being sent to editAuthor:", {
+      authorWorkData,
+      paperID,
+      hasPdfFile: !!pdfFile,
+    });
 
-    editAuthor(JSON.stringify(authorWorkData), paperID, pdfFile)
+    const params = pdfFile ? [JSON.stringify(authorWorkData), paperID, pdfFile] : [JSON.stringify(authorWorkData), paperID];
+    console.log("editAuthor params:", params);
+
+    editAuthor(...params)
       .then((res) => {
         alert("Paper details updated successfully.");
-        console.log(res.data);
+        console.log("editAuthor response:", res.data);
         seteditPaper(true);
+        handleGoButtonClick();
       })
       .catch((err) => {
-        console.error("Error updating paper details:", err);
-        alert("An error occurred while updating paper details.");
+        console.error("Detailed error updating paper details:", err);
+        console.error("Error response:", err.response);
+        alert(err.response?.data?.error || "An error occurred while updating paper details. Check the console for more details.");
       });
   };
 
@@ -688,9 +766,7 @@ const AuthorRegistration = () => {
                         disabled={editPaper}
                       >
                         <option value="">
-                          {paperDetails.track && paperDetails.track.track_name
-                            ? paperDetails.track.track_name
-                            : "Select Track"}
+                          {defaultTrack}
                         </option>
                         {tracks.map((trackItem) => (
                           <option key={trackItem._id} value={trackItem._id}>
@@ -754,7 +830,7 @@ const AuthorRegistration = () => {
                       <label className="block text-gray-700">
                         PDF File only: <span className="text-red-500">*</span>
                       </label>
-                      {paperDetails.pdfLink && (
+                      {paperDetails?.pdfLink && (
                         <div className="mb-2">
                           <a
                             href={paperDetails.pdfLink}
@@ -798,7 +874,7 @@ const AuthorRegistration = () => {
                     </div>
                     <div className="mb-4">
                       <label className="block text-gray-700">Co-Authors:</label>
-                      {paperDetails.co_authors
+                      {paperDetails?.co_authors?.length > 0
                         ? paperDetails.co_authors.map((coAuthor, index) => (
                             <div
                               key={index}
@@ -1019,7 +1095,7 @@ const AuthorRegistration = () => {
                       </button>
                       <button
                         type="button"
-                        className="bg-red-5 00 text-white px-5 py-1 rounded hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                        className="bg-red-500 text-white px-5 py-1 rounded hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                         onClick={handleWithdrawButtonClick}
                       >
                         Withdraw Paper
@@ -1208,9 +1284,7 @@ const AuthorRegistration = () => {
                         disabled={editPaper}
                       >
                         <option value="">
-                          {paperDetails.track && paperDetails.track.track_name
-                            ? paperDetails.track.track_name
-                            : "Select Track"}
+                          {defaultTrack}
                         </option>
                         {tracks.map((trackItem) => (
                           <option key={trackItem._id} value={trackItem._id}>
@@ -1274,7 +1348,7 @@ const AuthorRegistration = () => {
                       <label className="block text-gray-700">
                         PDF File only: <span className="text-red-500">*</span>
                       </label>
-                      {paperDetails.pdfLink && (
+                      {paperDetails?.pdfLink && (
                         <div className="mb-2">
                           <a
                             href={paperDetails.pdfLink}
@@ -1318,7 +1392,7 @@ const AuthorRegistration = () => {
                     </div>
                     <div className="mb-4">
                       <label className="block text-gray-700">Co-Authors:</label>
-                      {paperDetails.co_authors
+                      {paperDetails?.co_authors?.length > 0
                         ? paperDetails.co_authors.map((coAuthor, index) => (
                             <div
                               key={index}

@@ -156,13 +156,6 @@ const AuthorRegistration = () => {
     }
   };
 
-  const handleViewPDF = () => {
-    if (pdfFile) {
-      const fileURL = URL.createObjectURL(pdfFile);
-      window.open(fileURL, "_blank");
-    }
-  };
-
   const processKeywords = (input) => {
     const cleanedInput = input.replace(/,+/, ",").trim();
     const keywordArray = cleanedInput
@@ -604,7 +597,9 @@ const AuthorRegistration = () => {
                         key={conferenceItem._id}
                         value={conferenceItem._id}
                       >
-                        {toSentenceCase(conferenceItem.conference_title)}
+                        {conferenceItem.conference_title.toLowerCase() === "international conference on ai and geoscience remote sensing"
+                          ? "International Conference on AI and Geoscience Remote Sensing"
+                          : conferenceItem.conference_title}
                       </option>
                     ))}
                   </select>
@@ -837,28 +832,14 @@ const AuthorRegistration = () => {
                       </a>
                     </div>
                   )}
-                  <div className="flex items-center space-x-4">
-                    <input
-                      type="file"
-                      accept="application/pdf"
-                      className={`form-input mt-1 block w-full ${
-                        errors.pdfFile ? "border-red-500" : ""
-                      }`}
-                      onChange={handleFileChange}
-                    />
-                    <button
-                      type="button"
-                      className={`mt-1 px-4 py-2 text-sm font-medium rounded ${
-                        pdfFile
-                          ? "bg-blue-500 text-white hover:bg-blue-700"
-                          : "bg-gray-400 text-gray-700 cursor-not-allowed"
-                      }`}
-                      onClick={handleViewPDF}
-                      disabled={!pdfFile}
-                    >
-                      View PDF
-                    </button>
-                  </div>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className={`form-input mt-1 block w-full ${
+                      errors.pdfFile ? "border-red-500" : ""
+                    }`}
+                    onChange={handleFileChange}
+                  />
                   {errors.pdfFile && (
                     <p className="text-red-500 text-xs italic">
                       {errors.pdfFile}
@@ -1109,7 +1090,9 @@ const AuthorRegistration = () => {
                         key={conferenceItem._id}
                         value={conferenceItem._id}
                       >
-                        {toSentenceCase(conferenceItem.conference_title)}
+                        {conferenceItem.conference_title.toLowerCase() === "international conference on ai and geoscience remote sensing"
+                          ? "International Conference on AI and Geoscience Remote Sensing"
+                          : conferenceItem.conference_title}
                       </option>
                     ))}
                   </select>
@@ -1342,28 +1325,14 @@ const AuthorRegistration = () => {
                       </a>
                     </div>
                   )}
-                  <div className="flex items-center space-x-4">
-                    <input
-                      type="file"
-                      accept="application/pdf"
-                      className={`form-input mt-1 block w-full ${
-                        errors.pdfFile ? "border-red-500" : ""
-                      }`}
-                      onChange={handleFileChange}
-                    />
-                    <button
-                      type="button"
-                      className={`mt-1 px-4 py-2 text-sm font-medium rounded ${
-                        pdfFile
-                          ? "bg-blue-500 text-white hover:bg-blue-700"
-                          : "bg-gray-400 text-gray-700 cursor-not-allowed"
-                      }`}
-                      onClick={handleViewPDF}
-                      disabled={!pdfFile}
-                    >
-                      View PDF
-                    </button>
-                  </div>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className={`form-input mt-1 block w-full ${
+                      errors.pdfFile ? "border-red-500" : ""
+                    }`}
+                    onChange={handleFileChange}
+                  />
                   {errors.pdfFile && (
                     <p className="text-red-500 text-xs italic">
                       {errors.pdfFile}
@@ -1583,3 +1552,35 @@ const AuthorRegistration = () => {
 };
 
 export default AuthorRegistration;
+
+/* Edit Form (<form onSubmit={handleFormEdit}>):
+Added a "Withdraw Paper" button in the div with class flex justify center md:space-x-6 md:gap-4, after the "Edit" button.
+The button triggers handleWithdrawButtonClick, which calls the withdrawPaper function with the paperID to withdraw the paper. */
+
+/* Submission Form (<form onSubmit={handleFormSubmit}>):
+Added a "Withdraw Paper" button in the same div, after the "Edit" button, but it’s conditionally rendered only if paperID exists ({paperID && ...}).
+It also triggers handleWithdrawButtonClick to withdraw the paper. */
+
+/* In short,
+Added Edit, Save button to the form to toggle edit mode using handleEditToggle, and Withdraw Paper buttons to withdraw papers using handleWithdrawButtonClick */
+
+/* To remove the "Select Conference" field, modified the file by deleting the <select> element and its associated logic. Specifically:
+Removed the <select> dropdown for "Select Conference" from the JSX, which was located in the top right corner.
+Removed the conferences state and its useEffect hook that fetched conference data.
+Removed the handleConferenceChange function, which handled conference selection changes.
+Removed "Select Conference" dropdown, conferences state, useEffect for fetching conferences, and handleConferenceChange function to simplify the form. */
+
+/* To ensure the form accepts only PDF files and rejects Word or PPT files, the following changes:
+Added validation in the handlePdfFileChange function to check the file extension using file.name.split('.').pop().toLowerCase().
+If the extension isn't 'pdf', set pdfFileTypeError to true, clear the pdfFile state, and display an error message: "Please upload a PDF file only."
+Updated the form validation in handleFormSubmit and handleFormEdit to include pdfFileTypeError in the errors check, preventing submission if a non-PDF file is uploaded. 
+Added PDF-only validation in handlePdfFileChange by checking file extension, setting pdfFileTypeError, and updating form validation to reject non-PDF files (e.g., Word, PPT).*/
+
+/* To make fields like Name, Affiliation, Country, Email, Title, Track, Keywords, Abstract, and PDF mandatory, and to display an error message when they're missing, the following changes:
+Added validation logic in handleFormSubmit and handleFormEdit to check if mandatory fields (name, affiliation, country, email, title, track, keywords, abstract, pdfFile) are empty using const mandatoryFieldsMissing = !name || !affiliation || ....
+If mandatoryFieldsMissing is true, set an error message using setErrorMessage("Mandatory fields are required") and prevent form submission with a return.
+Added a conditional rendering in the JSX to display the error message: {errorMessage && <div className="text-red-500 text-center mb-4">{errorMessage}</div>}.
+Added individual error messages for each field in the errors state (e.g., if (!name) newErrors.name = "Name is required.";) to show specific feedback below each field. 
+Added mandatory field validation for Name, Affiliation, Country, Email, Title, Track, Keywords, Abstract, PDF in handleFormSubmit and handleFormEdit; set errorMessage state and displayed "Mandatory fields are required" if missing. */
+
+//Done

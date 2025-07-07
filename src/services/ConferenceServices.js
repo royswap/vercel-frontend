@@ -1,5 +1,5 @@
 import axios from "axios";
-const REST_API_BASE_URL = "https://vercel-backend-dev.vercel.app";
+const REST_API_BASE_URL = process.env.BACKURL;
 // const REST_API_BASE_URL="http://localhost:3030";
 export const listConference = () => axios.get(REST_API_BASE_URL);
 //create authors

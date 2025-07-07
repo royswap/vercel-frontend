@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 
-// const ConferenceServices = {
-//   createConference: async (formData) => { // Removed :any
-//     // Simulate an API call with a delay.
-//     await new Promise((resolve) => setTimeout(resolve, 1000));
-//     console.log("Simulated API call with data:", formData);
-//     // In a real app, we'd return the response from the API.
-//     return { success: true, message: "Conference created successfully!" };
-//   },
-// };
+const ConferenceServices = {
+  createConference: async (formData) => { // Removed :any
+    // Simulate an API call with a delay.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Simulated API call with data:", formData);
+    // In a real app, we'd return the response from the API.
+    // return { success: true, message: "Conference created successfully!" };
+    return ConferenceCreation();
+  },
+};
 
 function ConferenceCreation() {
   /* Define state variables for each field

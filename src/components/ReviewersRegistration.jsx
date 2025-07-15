@@ -38,10 +38,6 @@ function ReviewersRegistration() {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!selectedTrack.id) {
-      alert("select track first");
-      return;
-    }
     const formData = {
       name,
       email,
@@ -90,10 +86,6 @@ function ReviewersRegistration() {
   };
 
   const finalsave = () => {
-     if (!selectedTrack.id) {
-      alert("select track first");
-      return;
-    }
     const transformedData = {
       "reviewers": reviewers.map((item) => ({
         "name": item.name,

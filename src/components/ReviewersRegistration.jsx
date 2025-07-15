@@ -38,6 +38,10 @@ function ReviewersRegistration() {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!selectedTrack.id) {
+      alert("select track first");
+      return;
+    }
     const formData = {
       name,
       email,
@@ -74,19 +78,30 @@ function ReviewersRegistration() {
     }
   }, []);
 
+  const handleTrackChange = (event) => {
+    const selectedTrackId = event.target.value;
+    const selectedTrack = tracks.find(track => track._id === selectedTrackId);
+    setSelectedTrack({ id: selectedTrack._id, name: selectedTrack.track_name });
+    getallreviewersbytrack(selectedTrackId).then((res) => {
+      setExistingreviewers(res.data);
+    }).catch((err) => {
+
+    })
+  };
+
   const finalsave = () => {
      if (!selectedTrack.id) {
       alert("select track first");
       return;
     }
     const transformedData = {
-      reviewers: reviewers.map((item) => ({
-        name: item.name,
-        affiliation: item.affiliation,
-        country: item.country,
-        mobile: item.mobile,
-        email: item.email,
-        tracks: selectedTracks
+      "reviewers": reviewers.map((item) => ({
+        "name": item.name,
+        "affiliation": item.affiliation,
+        "country": item.country,
+        "mobile": item.mobile,
+        "email": item.email,
+        "tracks": selectedTracks
       })),
     };
     console.log(transformedData);
@@ -101,7 +116,6 @@ function ReviewersRegistration() {
         setMobile("");
         setGoogleScholarId("");
         setOrcidId("");
-
         // Update existing reviewers with new data from the response
         if (Response.data && Response.data.reviewers) {
           setExistingreviewers((prevReviewers) => [

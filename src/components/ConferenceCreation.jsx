@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { createConference } from '../services/ConferenceServices';
+
+const ConferenceServices = {
+  createConference: async (formData) => { // Removed :any
+    // Simulate an API call with a delay.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Simulated API call with data:", formData);
+    // In a real app, we'd return the response from the API.
+    return { success: true, message: "Conference created successfully!" };
+  },
+};
 
 function ConferenceCreation() {
   /* Define state variables for each field
@@ -49,17 +58,18 @@ function ConferenceCreation() {
       number_of_papers,
     };
     console.log("Form Data:", formData);
-    createConference(formData).then((res)=>{
-        setSuccess(true);
-     // setLoading(false);
-        console.log(res);
-        alert("conference created");
-        clear_feilds();
-    }).then((err)=>{
-       console.log(err);
-    }).finally(()=>{
+    try {
+      const response = await ConferenceServices.createConference(formData); // Await here
+      setSuccess(true); // set success to true
+      console.log(response);
+      alert("Conference created successfully!"); // give user feedback
+      clear_feilds();
+    } catch (error) {
+      console.error("Error creating conference:", error);
+      alert("Failed to create conference. Please check the console for details.");
+    } finally {
       setLoading(false);
-   })
+    }
   };
 
   const clear_feilds = () => {

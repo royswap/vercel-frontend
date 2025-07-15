@@ -29,6 +29,7 @@ function ReviewersRegistration() {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedTracks, setSelectedTracks] = useState([]);
   const [data, SetData] = useState(true);
+  const [selectedTrack, setSelectedTrack] = useState({ id: "", name: "" });
 
   const navigate = useNavigate();
   const location = useLocation(); // Added to access navigation state
@@ -74,6 +75,10 @@ function ReviewersRegistration() {
   }, []);
 
   const finalsave = () => {
+     if (!selectedTrack.id) {
+      alert("select track first");
+      return;
+    }
     const transformedData = {
       reviewers: reviewers.map((item) => ({
         name: item.name,
@@ -86,7 +91,7 @@ function ReviewersRegistration() {
     };
     console.log(transformedData);
 
-    createReviewers(transformedData,conference_id)
+    createReviewers(transformedData,selectedTrack.id)
       .then((Response) => {
         // Clear form data
         setName("");

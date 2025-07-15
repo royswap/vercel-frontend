@@ -301,11 +301,11 @@ export const reviewsubmit = (formdata) => {
 }
 export const gellAllusersBeforDate = (conference_id) => {
 
-  return axios.get(`${REST_API_BASE_URL}/member/allmembersexcurr/${conference_id}`);
+  return axios.get(`${REST_API_BASE_URL}/member/allmembersbyconid/${conference_id}`);
 };
 export const gellAllreviewersBeforDate = (conference_id) => {
 
-  return axios.get(`${REST_API_BASE_URL}/reviewer/allreviewersexcurr/${conference_id}`)
+  return axios.get(`${REST_API_BASE_URL}/reviewer/allreviewersbyconid/${conference_id}`)
 };
 export const gellmembersbycom = (com_id) => {
 

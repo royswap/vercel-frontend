@@ -86,7 +86,7 @@ function ReviewersRegistration() {
     };
     console.log(transformedData);
 
-    createReviewers(transformedData)
+    createReviewers(transformedData,conference_id)
       .then((Response) => {
         // Clear form data
         setName("");

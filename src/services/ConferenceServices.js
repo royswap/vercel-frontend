@@ -265,7 +265,7 @@ export const getallcommittees = (con_id) => {
 }
 
 export const getallmembersbyconid = (con_id) => {
-  return axios.get(`${REST_API_BASE_URL}/committee/allmembersbyconid/${con_id}`);
+  return axios.get(`${REST_API_BASE_URL}/member/allmembersbyconid/${con_id}`);
 }
 
 export const getallauthorworksbytrack = (track_id) => {

@@ -34,14 +34,14 @@ function Listofallmembers() {
         })
         .finally(() => setLoading(false));
 
-      getoldmembers();
+      getallmembers();
     }
   }, []);
 
-  const getoldmembers = () => {
+  const getallmembers = () => {
     const conference_id = sessionStorage.getItem("con");
     if (conference_id) {
-      gellAllusersBeforDate(conference_id)
+      getallmembers(conference_id)
         .then((res) => {
           setData(res.data);
           if (res.data.length === 0) {

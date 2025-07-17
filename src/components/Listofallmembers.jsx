@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  gellAllusersBeforDate,
+  getallmembersbyconid,
   getallcommittees,
 } from "../services/ConferenceServices";
 import { useNavigate } from "react-router-dom";
@@ -41,7 +41,7 @@ function Listofallmembers() {
   const getallmembers = () => {
     const conference_id = sessionStorage.getItem("con");
     if (conference_id) {
-      getallmembers(conference_id)
+      getallmembersbyconid(conference_id)
         .then((res) => {
           setData(res.data);
           if (res.data.length === 0) {

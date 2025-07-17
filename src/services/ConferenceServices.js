@@ -264,6 +264,10 @@ export const getallcommittees = (con_id) => {
   return axios.get(`${REST_API_BASE_URL}/committee/getcommittee/${con_id}`);
 }
 
+export const getallmembers = (con_id) => {
+  return axios.get(`${REST_API_BASE_URL}/committee/allmembersbyconid/${con_id}`);
+}
+
 export const getallauthorworksbytrack = (track_id) => {
   return axios.get(`${REST_API_BASE_URL}/author/getallauthorworkbytrack/${track_id}`);
 }

@@ -99,7 +99,7 @@ function Listoffirstauthors() {
         />
 
         <div className="absolute left-1/2 transform -translate-x-1/2 text-4xl">
-          <u>List of Reviewers</u>
+          <u>List of First Authors</u>
         </div>
         {/* Search Bar */}
         <div className="absolute right-0 mr-4">

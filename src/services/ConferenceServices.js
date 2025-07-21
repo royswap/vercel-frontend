@@ -1,5 +1,5 @@
 import axios from "axios";
-const REST_API_BASE_URL = "https://conference-backend-1.onrender.com";
+const REST_API_BASE_URL = "https://vercel-backend-nine-flame.vercel.app";
 // const REST_API_BASE_URL="http://localhost:3030";
 export const listConference = () => axios.get(REST_API_BASE_URL);
 //create authors
@@ -262,6 +262,10 @@ export const deleteTrack = (track_id) => {
 
 export const getallcommittees = (con_id) => {
   return axios.get(`${REST_API_BASE_URL}/committee/getcommittee/${con_id}`);
+}
+
+export const getallmembersbyconid = (con_id) => {
+  return axios.get(`${REST_API_BASE_URL}/member/allmembersbyconid/${con_id}`);
 }
 
 export const getallauthorworksbytrack = (track_id) => {

@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // Add useLocation to retrieve state
 import {
   createAuthorWork,
   fetchauthorwork,
   withdrawPaper,
   editAuthor,
 } from "../services/ConferenceServices";
+import { getAllConference } from "../services/ConferenceServices";
+import { useNavigate } from "react-router-dom";
 import homeIcon from "../assets/home36.png";
 
 const AuthorRegistration = () => {
-  const location = useLocation(); // Add this to access the navigation state
-  const conferenceTitle = location.state?.conferenceTitle || "No Conference Selected"; // Retrieve the conference title, with a fallback
+  const [conferenceList, setConferenceList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [editPaper, seteditPaper] = useState(false);
+  const [editPaper, seteditPaper] = useState(true);
+  const [conference, setConference] = useState(null);
   const [tracks, setTracks] = useState([]);
-  const [trackName, setTrackName] = useState("");
   const [topics, setTopics] = useState([]);
   const [name, setName] = useState("");
   const [affiliation, setAffiliation] = useState("");
@@ -26,10 +26,10 @@ const AuthorRegistration = () => {
   const [title, setTitle] = useState("");
   const [track, setTrack] = useState("");
   const [keywords, setKeywords] = useState("");
+  const [keywordCount, setKeywordCount] = useState(0);
   const [abstract, setAbstract] = useState("");
+  const [abstractWordCount, setAbstractWordCount] = useState(0);
   const [pdfFile, setPdfFile] = useState(null);
-  const [completionMessage, setCompletionMessage] = useState("");
-  const [topicid, setTopicid] = useState("");
   const [CoAuthors, setCoAuthors] = useState([
     {
       name: "",
@@ -53,215 +53,288 @@ const AuthorRegistration = () => {
     email: "",
     title: "",
     track: "",
-    topicid: "",
     keywords: "",
     abstract: "",
     pdfFile: "",
   });
-  const [keywordsWordCount, setKeywordsWordCount] = useState(0);
-  const [abstractWordCount, setAbstractWordCount] = useState(0);
-  const [keywordsLimitError, setKeywordsLimitError] = useState(false);
-  const [abstractLimitError, setAbstractLimitError] = useState(false);
-  const [pdfFileTypeError, setPdfFileTypeError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // Added state for error message
+  const [generalError, setGeneralError] = useState("");
 
   const [paperDetails, setPaperDetails] = useState({});
 
-  const defaultTrack =
-    paperDetails.track && paperDetails.track.track_name
-      ? paperDetails.track.track_name
-      : "Select Track";
+  const navigate = useNavigate();
 
-  const navigate = useNavigate(); // Initialize navigate
-
-  // Debug errorMessage state changes
   useEffect(() => {
-    if (errorMessage) {
-      console.log("errorMessage updated to:", errorMessage);
-    }
-  }, [errorMessage]);
-
-  // Debug component re-renders
-  useEffect(() => {
-    console.log("Component re-rendered, errorMessage is:", errorMessage);
-  });
-
-  // Load saved data from localStorage when the component mounts
-  useEffect(() => {
-    const savedData = localStorage.getItem('savedFormData');
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setName(parsedData.name || "");
-      setAffiliation(parsedData.affiliation || "");
-      setCountry(parsedData.country || "");
-      setContactNumber(parsedData.contactNumber || "");
-      setEmail(parsedData.email || "");
-      setGooglescId(parsedData.googlescId || "");
-      setOrchidId(parsedData.orchidId || "");
-      setTitle(parsedData.title || "");
-      setTrack(parsedData.track || "");
-      setSelectedTrackId(parsedData.selectedTrackId || "");
-      setKeywords(parsedData.keywords || "");
-      setAbstract(parsedData.abstract || "");
-      setCoAuthors(parsedData.CoAuthors || [
-        {
-          name: "",
-          email: "",
-          mobile: "",
-          affiliation: "",
-          country: "",
-          isCorresponding: false,
-        },
-      ]);
-      setIsCorrespondingAuthor(parsedData.isCorrespondingAuthor || false);
-      // Note: pdfFile cannot be restored from localStorage
-      // Update word counts for loaded data
-      setKeywordsWordCount(countWords(parsedData.keywords || ""));
-      setAbstractWordCount(countWords(parsedData.abstract || ""));
-    }
+    getAllConference()
+      .then((res) => {
+        console.log("Conference List:", res.data);
+        setConferenceList(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching conferences:", err);
+        setGeneralError("Failed to load conferences. Please try again later.");
+      });
   }, []);
 
   const handleTrackChange = (e) => {
     const ind = e.target.selectedIndex - 1;
     setSelectedTrackId(e.target.value);
-    if (ind !== -1) {
-      setTopics(tracks[ind].topics);
-      setTrack(tracks[ind].track_name);
+    if (ind !== -1 && tracks[ind]) {
+      setTopics(tracks[ind].topics || []);
+      setTrack(tracks[ind].track_name || "");
     } else {
       setTopics([]);
+      setTrack("");
+      setSelectedTrackId("");
     }
   };
 
   const clearData = () => {
-    setName();
-    setEmail();
+    setName("");
+    setEmail("");
+    setAffiliation("");
+    setCountry("");
+    setContactNumber("");
+    setGooglescId("");
+    setOrchidId("");
+    setTitle("");
+    setTrack("");
+    setKeywords("");
+    setKeywordCount(0);
+    setAbstract("");
+    setAbstractWordCount(0);
+    setPdfFile(null);
+    setCoAuthors([
+      {
+        name: "",
+        email: "",
+        mobile: "",
+        affiliation: "",
+        country: "",
+        isCorresponding: false,
+      },
+    ]);
+    setSelectedTrackId("");
+    setConference(null);
+    setTracks([]);
+    setGeneralError("");
+    setErrors({});
   };
 
-  const countWords = (text) => {
-    if (!text) return 0;
-    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePDF = (file) => {
+    if (!file) return false;
+    const maxSize = 5 * 1024 * 1024; // 5MB limit
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      return "please upload pdf file only";
+    }
+    if (file.size > maxSize) {
+      return "File size exceeds 5MB limit.";
+    }
+    return true;
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      setPdfFile(null);
+      setErrors((prev) => ({ ...prev, pdfFile: "PDF file is required." }));
+      return;
+    }
+
+    const validationResult = validatePDF(file);
+    if (validationResult === true) {
+      setPdfFile(file);
+      setErrors((prev) => ({ ...prev, pdfFile: "" }));
+    } else {
+      setPdfFile(null);
+      setErrors((prev) => ({ ...prev, pdfFile: validationResult }));
+      e.target.value = null; // Clear the file input
+    }
+  };
+
+  const processKeywords = (input) => {
+    const cleanedInput = input.replace(/,+/, ",").trim();
+    const keywordArray = cleanedInput
+      .split(",")
+      .map((kw) => kw.trim())
+      .filter((kw) => kw);
+    return keywordArray;
+  };
+
+  const formatKeywordsForSubmission = (keywordArray) => {
+    return keywordArray.map((kw) => kw.replace(/\s+/g, "_")).join(",");
+  };
+
+  const displayKeywords = (keywords) => {
+    return keywords.replace(/_/g, " ");
   };
 
   const handleKeywordsChange = (e) => {
-    const value = e.target.value;
-    setKeywords(value);
-    const wordCount = countWords(value);
-    setKeywordsWordCount(wordCount);
-    setKeywordsLimitError(wordCount > 5);
-    if (errors.keywords && wordCount <= 5) {
+    let value = e.target.value.replace(/\s+/g, "_").replace(/,+/, ",").trim();
+    const keywordArray = processKeywords(value);
+    
+    setKeywordCount(keywordArray.length);
+
+    if (keywordArray.length > 5) {
+      setErrors((prev) => ({
+        ...prev,
+        keywords: "limited to 5 words, delimited by comma",
+      }));
+      value = keywordArray.slice(0, 5).join(",");
+    } else {
       setErrors((prev) => ({ ...prev, keywords: "" }));
     }
+
+    setKeywords(value);
   };
 
   const handleAbstractChange = (e) => {
     const value = e.target.value;
-    setAbstract(value);
-    const wordCount = countWords(value);
-    setAbstractWordCount(wordCount);
-    setAbstractLimitError(wordCount > 1000);
-    if (errors.abstract && wordCount <= 1000) {
-      setErrors((prev) => ({ ...prev, abstract: "" }));
-    }
-  };
+    const wordArray = value.trim().split(/\s+/).filter((word) => word);
+    setAbstractWordCount(wordArray.length);
 
-  const handlePdfFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const fileExtension = file.name.split('.').pop().toLowerCase();
-      if (fileExtension !== 'pdf') {
-        setPdfFileTypeError(true);
-        setPdfFile(null); // Clear the file if it's not a PDF
-        setErrors((prev) => ({ ...prev, pdfFile: "Please upload a PDF file only." }));
-      } else {
-        setPdfFileTypeError(false);
-        setPdfFile(file);
-        setErrors((prev) => ({ ...prev, pdfFile: "" })); // Clear any existing PDF error
-      }
+    if (wordArray.length > 1000) {
+      setErrors((prev) => ({
+        ...prev,
+        abstract: "limited to 1000 words only",
+      }));
+      const limitedWords = wordArray.slice(0, 1000).join(" ");
+      setAbstract(limitedWords);
+      setAbstractWordCount(1000);
     } else {
-      setPdfFileTypeError(false);
-      setPdfFile(null);
+      setErrors((prev) => ({
+        ...prev,
+        abstract: value ? "" : "Abstract is required.",
+      }));
+      setAbstract(value);
     }
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    console.log("gggggg");
-
     const newErrors = {};
+
     if (!name) newErrors.name = "Name is required.";
     if (!affiliation) newErrors.affiliation = "Affiliation is required.";
     if (!country) newErrors.country = "Country is required.";
-    if (!contactNumber) newErrors.contactNumber = "Contact number is required.";
     if (!email) newErrors.email = "Email is required.";
+    else if (!validateEmail(email)) newErrors.email = "Invalid email format.";
     if (!title) newErrors.title = "Title is required.";
     if (!track) newErrors.track = "Track is required.";
     if (!keywords) newErrors.keywords = "Keywords are required.";
-    if (!abstract) newErrors.abstract = "Abstract is required.";
-    if (!pdfFile) newErrors.pdfFile = "PDF file is required.";
-    if (keywordsWordCount > 5) newErrors.keywords = "Keywords exceed 5 words.";
-    if (abstractWordCount > 1000) newErrors.abstract = "Abstract exceeds 1000 words.";
-    if (pdfFileTypeError) newErrors.pdfFile = "Please upload a PDF file only.";
-
-    // Check for mandatory fields and display error message
-    const mandatoryFieldsMissing = !name || !affiliation || !country || !email || !title || !track || !keywords || !abstract || !pdfFile;
-    if (mandatoryFieldsMissing) {
-      setTimeout(() => {
-        setErrorMessage("Mandatory fields are required");
-      }, 0);
-      setErrors(newErrors);
-      return;
-    } else {
-      setTimeout(() => {
-        setErrorMessage("");
-      }, 0);
-      setErrors(newErrors);
+    else {
+      const keywordArray = processKeywords(keywords);
+      if (keywordArray.length > 5) {
+        newErrors.keywords = "limited to 5 words, delimited by comma";
+      }
     }
+    if (!abstract) newErrors.abstract = "Abstract is required.";
+    else {
+      const wordArray = abstract.trim().split(/\s+/).filter((word) => word);
+      if (wordArray.length > 1000) {
+        newErrors.abstract = "limited to 1000 words only";
+      }
+    }
+    if (!pdfFile) newErrors.pdfFile = "PDF file is required.";
+    else {
+      const pdfValidation = validatePDF(pdfFile);
+      if (pdfValidation !== true) newErrors.pdfFile = pdfValidation;
+    }
+
+    setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
-      console.log("ddd");
+      setGeneralError("These fields are mandatory or invalid, please fill up correctly.");
       return;
     }
 
-    const coAuthorsData = CoAuthors.map((coAuthor) => ({
-      name: coAuthor.name,
-      affiliation: coAuthor.affiliation,
-      country: coAuthor.country,
-      contact_no: coAuthor.mobile,
-      email: coAuthor.email,
-      isCorrespondingAuthor: coAuthor.isCorresponding,
-    }));
+    if (!conference || !conference._id) {
+      setGeneralError("Please select a conference.");
+      return;
+    }
+    if (!selectedTrackId) {
+      setGeneralError("Please select a track.");
+      return;
+    }
 
+    setGeneralError("");
+
+    const coAuthorsData = CoAuthors.map((coAuthor, index) => {
+      const coAuthorData = {
+        name: coAuthor.name || "",
+        affiliation: coAuthor.affiliation || "",
+        country: coAuthor.country || "",
+        contact_no: coAuthor.mobile || "",
+        email: coAuthor.email || "",
+        isCorrespondingAuthor: coAuthor.isCorresponding || false,
+      };
+      if (coAuthor.email && !validateEmail(coAuthor.email)) {
+        setGeneralError(`Invalid email format for co-author ${coAuthor.name || `Co-author ${index + 1}`}.`);
+        throw new Error("Invalid co-author email");
+      }
+      return coAuthorData;
+    });
+
+    const keywordArray = processKeywords(keywords);
+    const formattedKeywords = formatKeywordsForSubmission(keywordArray);
     const authorWorkData = {
-      name,
-      affiliation,
-      country,
-      contact_no: contactNumber,
-      email,
-      google_sh_id: googlescId,
-      orcid_id: orchidId,
-      title,
-      keywords,
-      abstract,
+      name: name.trim(),
+      affiliation: affiliation.trim(),
+      country: country.trim(),
+      contact_no: contactNumber.trim(),
+      email: email.trim(),
+      google_sh_id: googlescId.trim(),
+      orcid_id: orchidId.trim(),
+      title: title.trim(),
+      keywords: formattedKeywords,
+      abstract: abstract.trim(),
       co_authors: coAuthorsData,
       isCorrespondingAuthor: isCorrespondingAuthor,
     };
 
-    setLoading(true);
-    createAuthorWork(authorWorkData, selectedTrackId, pdfFile)
-      .then((Response) => {
-        console.log(Response.data);
-        setPaperId(Response.data.paper_id);
-        setShowPopup(true);
-        clearData();
-        seteditPaper(true);
-      })
-      .catch((err) => {
-        alert(err.response.data.error);
-        console.log(err);
-      });
-    setLoading(false);
+    console.log("Submitting data:", {
+      authorWorkData,
+      selectedTrackId,
+      conferenceId: conference._id,
+      pdfFile: pdfFile ? pdfFile.name : null,
+    });
 
-    console.log(authorWorkData);
+    setLoading(true);
+    try {
+      const response = await createAuthorWork(
+        authorWorkData,
+        selectedTrackId,
+        conference._id,
+        pdfFile
+      );
+      console.log("API Response:", response.data);
+      const receivedPaperId = response.data.paper_id || "Unknown Paper ID";
+      setPaperId(receivedPaperId);
+      setShowPopup(true);
+      clearData();
+      seteditPaper(false);
+    } catch (err) {
+      console.error("Error submitting form:", err);
+      let errorMessage = "Failed to submit paper. Please try again.";
+      if (err.response) {
+        console.error("Response data:", err.response.data);
+        console.error("Response status:", err.response.status);
+        errorMessage = err.response.data.error || "Server error occurred.";
+      } else if (err.request) {
+        console.error("No response received:", err.request);
+        errorMessage = "No response from server. Please check your connection.";
+      } else {
+        console.error("Error details:", err.message);
+        errorMessage = err.message;
+      }
+      setGeneralError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddCoAuthor = () => {
@@ -271,8 +344,7 @@ const AuthorRegistration = () => {
       mobile: "",
       affiliation: "",
       country: "",
-      googleScholarId: "",
-      orchidId: "",
+      isCorresponding: false,
     };
     setCoAuthors([...CoAuthors, newCoAuthor]);
   };
@@ -293,51 +365,68 @@ const AuthorRegistration = () => {
     window.location.reload();
   };
 
+  const handleConferenceChange = (event) => {
+    const selectedConferenceId = event.target.value;
+    const selectedConferenceData = conferenceList.find(
+      (conference) => conference._id === selectedConferenceId
+    );
+    setConference(selectedConferenceData || null);
+    setTracks(selectedConferenceData ? selectedConferenceData.tracks : []);
+    setSelectedTrackId("");
+    setTrack("");
+    console.log("Selected Conference:", selectedConferenceData);
+  };
+
   const redirectToHome = () => {
-    navigate("/select-conference"); //redirection by home icon
+    navigate("/select-conference");
   };
 
   const handleGoButtonClick = () => {
+    if (!paperID) {
+      setGeneralError("Please enter a Paper ID to search.");
+      return;
+    }
     fetchauthorwork(paperID)
-      .then((Response) => {
-        console.log(Response.data);
-        setPaperDetails(Response.data);
-        setName(Response.data.name);
-        setAffiliation(Response.data.affiliation);
-        setCountry(Response.data.country);
-        setContactNumber(Response.data.contact_no);
-        setEmail(Response.data.email);
-        setGooglescId(Response.data.google_sh_id);
-        setOrchidId(Response.data.orcid_id);
-        setTitle(Response.data.title);
-        setKeywords(Response.data.keywords);
-        setAbstract(Response.data.abstract);
-        seteditPaper(true);
-        // Update word counts for fetched data
-        setKeywordsWordCount(countWords(Response.data.keywords));
-        setAbstractWordCount(countWords(Response.data.abstract));
+      .then((response) => {
+        console.log("Fetched Paper Data:", response.data);
+        setPaperDetails(response.data);
+        setName(response.data.name || "");
+        setAffiliation(response.data.affiliation || "");
+        setCountry(response.data.country || "");
+        setContactNumber(response.data.contact_no || "");
+        setEmail(response.data.email || "");
+        setGooglescId(response.data.google_sh_id || "");
+        setOrchidId(response.data.orcid_id || "");
+        setTitle(response.data.title || "");
+        const displayedKeywords = response.data.keywords ? displayKeywords(response.data.keywords) : "";
+        setKeywords(displayedKeywords);
+        const keywordArray = processKeywords(displayedKeywords);
+        setKeywordCount(keywordArray.length);
+        const fetchedAbstract = response.data.abstract || "";
+        setAbstract(fetchedAbstract);
+        const wordArray = fetchedAbstract.trim().split(/\s+/).filter((word) => word);
+        setAbstractWordCount(wordArray.length);
+        seteditPaper(false);
       })
       .catch((err) => {
         console.error("Error fetching paper data:", err);
-      })
-      .catch(() => {});
+        setGeneralError("Failed to fetch paper data. Please check the Paper ID.");
+      });
   };
 
   const handleWithdrawButtonClick = () => {
     if (!paperID) {
-      alert("Please enter a Paper ID to withdraw.");
+      setGeneralError("Please enter a Paper ID to withdraw.");
       return;
     }
-    console.log(paperID);
-
     withdrawPaper(paperID)
       .then(() => {
+        setGeneralError("");
         alert("Paper withdrawn successfully.");
       })
       .catch((error) => {
         console.error("Error withdrawing paper:", error);
-        setLoading(false);
-        alert("An error occurred while withdrawing the paper.");
+        setGeneralError("An error occurred while withdrawing the paper.");
       });
   };
 
@@ -345,98 +434,82 @@ const AuthorRegistration = () => {
     e.preventDefault();
 
     const newErrors = {};
+
     if (!name) newErrors.name = "Name is required.";
     if (!affiliation) newErrors.affiliation = "Affiliation is required.";
     if (!country) newErrors.country = "Country is required.";
-    if (!contactNumber) newErrors.contactNumber = "Contact number is required.";
     if (!email) newErrors.email = "Email is required.";
+    else if (!validateEmail(email)) newErrors.email = "Invalid email format.";
     if (!title) newErrors.title = "Title is required.";
     if (!track) newErrors.track = "Track is required.";
     if (!keywords) newErrors.keywords = "Keywords are required.";
-    if (!abstract) newErrors.abstract = "Abstract is required.";
-    if (keywordsWordCount > 5) newErrors.keywords = "Keywords exceed 5 words.";
-    if (abstractWordCount > 1000) newErrors.abstract = "Abstract exceeds 1000 words.";
-    if (pdfFileTypeError) newErrors.pdfFile = "Please upload a PDF file only.";
-
-    // Check for mandatory fields and display error message
-    const mandatoryFieldsMissing = !name || !affiliation || !country || !email || !title || !track || !keywords || !abstract || (paperDetails.pdfLink ? false : !pdfFile);
-    if (mandatoryFieldsMissing) {
-      setTimeout(() => {
-        setErrorMessage("Mandatory fields are required");
-      }, 0);
-      setErrors(newErrors);
-      return;
-    } else {
-      setTimeout(() => {
-        setErrorMessage("");
-      }, 0);
-      setErrors(newErrors);
+    else {
+      const keywordArray = processKeywords(keywords);
+      if (keywordArray.length > 5) {
+        newErrors.keywords = "limited to 5 words, delimited by comma";
+      }
     }
+    if (!abstract) newErrors.abstract = "Abstract is required.";
+    else {
+      const wordArray = abstract.trim().split(/\s+/).filter((word) => word);
+      if (wordArray.length > 1000) {
+        newErrors.abstract = "limited to 1000 words only";
+      }
+    }
+    if (!paperDetails.pdfLink && !pdfFile) {
+      newErrors.pdfFile = "PDF file is required.";
+    } else if (pdfFile) {
+      const pdfValidation = validatePDF(pdfFile);
+      if (pdfValidation !== true) newErrors.pdfFile = pdfValidation;
+    }
+
+    setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
+      setGeneralError("These fields are mandatory or invalid, please fill up correctly.");
       return;
     }
 
+    setGeneralError("");
+
     const coAuthorsData = CoAuthors.map((coAuthor) => ({
-      name: coAuthor.name,
-      affiliation: coAuthor.affiliation,
-      country: coAuthor.country,
-      contact_no: coAuthor.mobile,
-      email: coAuthor.email,
+      name: coAuthor.name || "",
+      affiliation: coAuthor.affiliation || "",
+      country: coAuthor.country || "",
+      contact_no: coAuthor.mobile || "",
+      email: coAuthor.email || "",
+      isCorrespondingAuthor: coAuthor.isCorresponding || false,
     }));
 
+    const keywordArray = processKeywords(keywords);
+    const formattedKeywords = formatKeywordsForSubmission(keywordArray);
     const authorWorkData = {
-      name,
-      affiliation,
-      country,
-      contact_no: contactNumber,
-      email,
-      google_sh_id: googlescId,
-      orcid_id: orchidId,
-      title,
-      keywords,
-      abstract,
+      name: name.trim(),
+      affiliation: affiliation.trim(),
+      country: country.trim(),
+      contact_no: contactNumber.trim(),
+      email: email.trim(),
+      google_sh_id: googlescId.trim(),
+      orcid_id: orchidId.trim(),
+      title: title.trim(),
+      keywords: formattedKeywords,
+      abstract: abstract.trim(),
       co_authors: coAuthorsData,
     };
 
-    console.log("Changed Data:", authorWorkData);
+    console.log("Editing data:", authorWorkData);
 
     editAuthor(JSON.stringify(authorWorkData), paperID, pdfFile)
       .then((res) => {
+        setGeneralError("");
         alert("Paper details updated successfully.");
-        console.log(res.data);
-        seteditPaper(true); // Disable editing after saving changes
+        console.log("Edit Response:", res.data);
+        seteditPaper(true);
       })
       .catch((err) => {
         console.error("Error updating paper details:", err);
-        alert("An error occurred while updating paper details.");
+        setGeneralError("An error occurred while updating paper details.");
       });
-  };
-
-  const handleSave = () => {
-    const formData = {
-      name,
-      affiliation,
-      country,
-      contactNumber,
-      email,
-      googlescId,
-      orchidId,
-      title,
-      track,
-      selectedTrackId,
-      keywords,
-      abstract,
-      CoAuthors,
-      isCorrespondingAuthor,
-      pdfFileName: pdfFile ? pdfFile.name : null,
-    };
-    localStorage.setItem('savedFormData', JSON.stringify(formData));
-    alert('Form data saved successfully!');
-  };
-
-  const handleEditToggle = () => {
-    seteditPaper((prev) => !prev);
   };
 
   const toSentenceCase = (text) => {
@@ -449,7 +522,6 @@ const AuthorRegistration = () => {
       <div className="flex justify-center">
         <div className="w-full h-full border border-3 shadow-sm p-3 mb-5 bg-body-tertiary rounded bg-slate-50 max-w-5xl mt-5">
           <div className="bg-white shadow-md rounded-lg p-6">
-            {/* Home Icon */}
             <div className="w-full flex justify-between items-center mb-4">
               <img
                 src={homeIcon}
@@ -466,8 +538,8 @@ const AuthorRegistration = () => {
                     Your Paper is submitted successfully
                   </h2>
                   <p className="mb-4 text-xl font-medium">
-                    <span style={{ color: "red" }}>*</span>Please note your
-                    Paper ID for future reference.{paperId}
+                    <span className="text-red-500">*</span>Please note your
+                    Paper ID for future reference: {paperId}
                   </p>
                   <button
                     onClick={handleRedirect}
@@ -479,25 +551,17 @@ const AuthorRegistration = () => {
               </div>
             )}
             <div className="flex items-center justify-center text-4xl mb-4">
-              <div className="text-center">
-                <h1 className="text-4xl mb-2">{conferenceTitle}</h1> {/* Display the conference title */}
-                <u className="text-4xl">Submit Paper and Edit</u>
-              </div>
+              <u>Submit Paper and Edit</u>
             </div>
 
-            {/* Display error message if mandatory fields are missing */}
-            {errorMessage && (
-              <div
-                className="text-red-500 text-center mb-4"
-                style={{ color: "red", fontWeight: "bold" }}
-              >
-                {errorMessage}
+            {generalError && (
+              <div className="alert alert-danger mb-4 text-center text-red-500 font-semibold">
+                {generalError}
               </div>
             )}
 
             {paperDetails && !editPaper ? (
               <form onSubmit={handleFormEdit}>
-                {/*Ppaer ID Search and Go button*/}
                 <label className="block text-gray-700">Paper Id:</label>
                 <div className="flex items-center">
                   <input
@@ -505,7 +569,6 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300"
                     value={paperID}
                     onChange={(e) => setPaperID(e.target.value)}
-                    disabled={editPaper}
                   />
                   <button
                     type="button"
@@ -516,10 +579,40 @@ const AuthorRegistration = () => {
                   </button>
                 </div>
 
-                {/* Name */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Conference:</label>
+                  <select
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.track ? "border-red-500" : ""
+                    }`}
+                    onChange={handleConferenceChange}
+                  >
+                    <option value="">
+                      {paperDetails && paperDetails.conference_title
+                        ? paperDetails.conference_title
+                        : "Select Conference"}
+                    </option>
+                    {conferenceList.map((conferenceItem) => (
+                      <option
+                        key={conferenceItem._id}
+                        value={conferenceItem._id}
+                      >
+                        {conferenceItem.conference_title.toLowerCase() === "international conference on ai and geoscience remote sensing"
+                          ? "International Conference on AI and Geoscience Remote Sensing"
+                          : conferenceItem.conference_title}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.track && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.track}
+                    </p>
+                  )}
+                </div>
+
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Name: <span className="text-red-500">*</span>
+                    Name:<span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center">
                     <input
@@ -529,7 +622,6 @@ const AuthorRegistration = () => {
                       }`}
                       value={toSentenceCase(name)}
                       onChange={(e) => setName(e.target.value)}
-                      disabled={editPaper}
                     />
                     <label className="ml-2">
                       <input
@@ -539,7 +631,6 @@ const AuthorRegistration = () => {
                         onChange={(e) =>
                           setIsCorrespondingAuthor(e.target.checked)
                         }
-                        disabled={editPaper}
                       />
                       <span className="ml-1">Corresponding Author</span>
                     </label>
@@ -548,10 +639,9 @@ const AuthorRegistration = () => {
                     <p className="text-red-500 text-xs italic">{errors.name}</p>
                   )}
                 </div>
-                {/* Affiliation */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Affiliation: <span className="text-red-500">*</span>
+                    Affiliation:<span className="text-red-500">*</span>
                   </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -559,7 +649,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={toSentenceCase(affiliation)}
                     onChange={(e) => setAffiliation(e.target.value)}
-                    disabled={editPaper}
                   ></textarea>
                   {errors.affiliation && (
                     <p className="text-red-500 text-xs italic">
@@ -567,10 +656,9 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Country */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Country: <span className="text-red-500">*</span>
+                    Country:<span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -579,7 +667,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={toSentenceCase(country)}
                     onChange={(e) => setCountry(e.target.value)}
-                    disabled={editPaper}
                   />
                   {errors.country && (
                     <p className="text-red-500 text-xs italic">
@@ -587,7 +674,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Contact Number */}
                 <div className="mb-4">
                   <label className="block text-gray-700">Contact Number:</label>
                   <input
@@ -597,7 +683,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={contactNumber}
                     onChange={(e) => setContactNumber(e.target.value)}
-                    disabled={editPaper}
                   />
                   {errors.contactNumber && (
                     <p className="text-red-500 text-xs italic">
@@ -605,10 +690,9 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Email */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Email: <span className="text-red-500">*</span>
+                    Email:<span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -617,7 +701,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={editPaper}
                   />
                   {errors.email && (
                     <p className="text-red-500 text-xs italic">
@@ -625,7 +708,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Google Scholar ID */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Google Scholar ID (Optional):
@@ -635,10 +717,8 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block w-full border border-gray-300"
                     value={googlescId}
                     onChange={(e) => setGooglescId(e.target.value)}
-                    disabled={editPaper}
                   />
                 </div>
-                {/* ORCID ID */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     ORCID ID (Optional):
@@ -648,13 +728,11 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block w-full border border-gray-300"
                     value={orchidId}
                     onChange={(e) => setOrchidId(e.target.value)}
-                    disabled={editPaper}
                   />
                 </div>
-                {/* Title */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Title: <span className="text-red-500">*</span>
+                    Title:<span className="text-red-500">*</span>
                   </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -662,7 +740,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={toSentenceCase(title)}
                     onChange={(e) => setTitle(e.target.value)}
-                    disabled={editPaper}
                   ></textarea>
                   {errors.title && (
                     <p className="text-red-500 text-xs italic">
@@ -670,10 +747,9 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Track */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Track: <span className="text-red-500">*</span>
+                    Track:<span className="text-red-500">*</span>
                   </label>
                   <select
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -681,7 +757,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={selectedTrackId}
                     onChange={handleTrackChange}
-                    disabled={editPaper}
                   >
                     <option value="">
                       {paperDetails.track && paperDetails.track.track_name
@@ -700,58 +775,50 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Keywords */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Keywords: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 5 words)</span>
+                    Keywords <span className="text-red-500">* (Limited to 5 words, delimited by comma)</span>
                   </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.keywords || keywordsLimitError ? "border-red-500" : ""
+                      errors.keywords ? "border-red-500" : ""
                     }`}
-                    value={toSentenceCase(keywords)}
+                    value={keywords}
                     onChange={handleKeywordsChange}
-                    disabled={editPaper}
+                    placeholder="e.g., machine_learning,data_science,apple"
                   ></textarea>
-                  {keywordsLimitError && (
-                    <p className="text-red-500 text-xs italic">
-                      Word limit exceeded (max 5 words)
-                    </p>
-                  )}
-                  {errors.keywords && !keywordsLimitError && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    {keywordCount}/5 keywords
+                  </div>
+                  {errors.keywords && (
                     <p className="text-red-500 text-xs italic">
                       {errors.keywords}
                     </p>
                   )}
                 </div>
-                {/* Abstract */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Abstract: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 1000 words)</span>
+                    Abstract <span className="text-red-500">* (Limited to 1000 words, delimited by space)</span>
                   </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.abstract || abstractLimitError ? "border-red-500" : ""
+                      errors.abstract ? "border-red-500" : ""
                     }`}
                     value={toSentenceCase(abstract)}
                     onChange={handleAbstractChange}
-                    disabled={editPaper}
                   ></textarea>
-                  {abstractLimitError && (
-                    <p className="text-red-500 text-xs italic">
-                      Word limit exceeded (max 1000 words)
-                    </p>
-                  )}
-                  {errors.abstract && !abstractLimitError && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    {abstractWordCount}/1000 words
+                  </div>
+                  {errors.abstract && (
                     <p className="text-red-500 text-xs italic">
                       {errors.abstract}
                     </p>
                   )}
                 </div>
-                {/* PDF File */}
                 <div className="mb-4 flex flex-col">
-                  <label className="block text-red-500">
-                    PDF File only: <span className="text-red-500">*</span>
+                  <label className="block text-gray-700">
+                    PDF File:{!paperDetails.pdfLink && <span className="text-red-500">*</span>}
                   </label>
                   {paperDetails.pdfLink && (
                     <div className="mb-2">
@@ -767,31 +834,25 @@ const AuthorRegistration = () => {
                   )}
                   <input
                     type="file"
+                    accept="application/pdf"
                     className={`form-input mt-1 block w-full ${
-                      errors.pdfFile || pdfFileTypeError ? "border-red-500" : ""
+                      errors.pdfFile ? "border-red-500" : ""
                     }`}
-                    onChange={handlePdfFileChange}
-                    disabled={editPaper}
+                    onChange={handleFileChange}
                   />
-                  {pdfFileTypeError && (
-                    <p className="text-red-500 text-xs italic">
-                      Please upload a PDF file only.
-                    </p>
-                  )}
-                  {errors.pdfFile && !pdfFileTypeError && (
+                  {errors.pdfFile && (
                     <p className="text-red-500 text-xs italic">
                       {errors.pdfFile}
                     </p>
                   )}
                 </div>
-                {/* Co-Authors */}
                 <div className="mb-4">
                   <label className="block text-gray-700">Co-Authors:</label>
                   {paperDetails.co_authors
                     ? paperDetails.co_authors.map((coAuthor, index) => (
                         <div
                           key={index}
-                          className="flex space-x-4 items-center"
+                          className="flex space-x-4 items-center mb-2"
                         >
                           <input
                             type="text"
@@ -805,7 +866,6 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <input
                             type="email"
@@ -819,7 +879,6 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -833,7 +892,6 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -847,7 +905,6 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -861,13 +918,11 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <button
                             type="button"
                             className="bg-red-500 text-white px-5 py-1 rounded"
                             onClick={() => handleDeleteCoAuthor(index)}
-                            disabled={editPaper}
                           >
                             Remove
                           </button>
@@ -875,10 +930,10 @@ const AuthorRegistration = () => {
                       ))
                     : CoAuthors.map((coAuthor, index) => (
                         <div key={index} className="mb-2">
-                          <div className="flex items-center">
+                          <div className="flex items-center space-x-3">
                             <input
                               type="text"
-                              className="form-input mt-1 block w-full mr-3"
+                              className="form-input mt-1 block w-full"
                               placeholder="Name"
                               value={coAuthor.name}
                               onChange={(e) =>
@@ -888,11 +943,10 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <input
                               type="text"
-                              className="form-input mt-1 block w-full mr-3"
+                              className="form-input mt-1 block w-full"
                               placeholder="Email"
                               value={coAuthor.email}
                               onChange={(e) =>
@@ -902,11 +956,10 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <input
                               type="text"
-                              className="form-input mt-1 block w-full mr-3"
+                              className="form-input mt-1 block w-full"
                               placeholder="Mobile"
                               value={coAuthor.mobile}
                               onChange={(e) =>
@@ -916,11 +969,10 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <input
                               type="text"
-                              className="form-input mt-1 block w-full mr-3"
+                              className="form-input mt-1 block w-full"
                               placeholder="Affiliation"
                               value={coAuthor.affiliation}
                               onChange={(e) =>
@@ -930,11 +982,10 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <input
                               type="text"
-                              className="form-input mt-1 block w-1/2 mr-3"
+                              className="form-input mt-1 block w-1/2"
                               placeholder="Country"
                               value={coAuthor.country}
                               onChange={(e) =>
@@ -944,7 +995,6 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <label className="mr-2">
                               <input
@@ -958,7 +1008,6 @@ const AuthorRegistration = () => {
                                     e.target.checked
                                   )
                                 }
-                                disabled={editPaper}
                               />
                               <span className="ml-1">Corresponding Author</span>
                             </label>
@@ -966,7 +1015,6 @@ const AuthorRegistration = () => {
                               type="button"
                               className="bg-red-500 text-white px-4 py-2 rounded"
                               onClick={() => handleDeleteCoAuthor(index)}
-                              disabled={editPaper}
                             >
                               Delete
                             </button>
@@ -976,36 +1024,20 @@ const AuthorRegistration = () => {
 
                   <button
                     type="button"
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     onClick={handleAddCoAuthor}
-                    disabled={editPaper}
                   >
                     Add Co-Author
                   </button>
                 </div>
 
-                <div className="flex justify-center md:space-x-6 md:gap-4">
-                  {/* Submit or Edit Button */}
+                <div className="flex justify-center space-x-6 gap-4">
                   <button
                     type="submit"
                     className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     disabled={loading}
                   >
                     Save Changes
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-                    onClick={handleSave}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-                    onClick={handleEditToggle}
-                  >
-                    {editPaper ? "Edit" : "Cancel Edit"}
                   </button>
                   <button
                     type="button"
@@ -1018,7 +1050,6 @@ const AuthorRegistration = () => {
               </form>
             ) : (
               <form onSubmit={handleFormSubmit}>
-                {/*Ppaer ID Search and Go button*/}
                 <label className="block text-gray-700">Paper Id:</label>
                 <div className="flex items-center">
                   <input
@@ -1026,7 +1057,6 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block md:w-1/2 lg:w-1/2 border border-gray-300"
                     value={paperID}
                     onChange={(e) => setPaperID(e.target.value)}
-                    disabled={editPaper}
                   />
                   <button
                     type="button"
@@ -1036,16 +1066,46 @@ const AuthorRegistration = () => {
                         : "border border-gray-400 bg-gray-400 text-gray-700 cursor-not-allowed"
                     }`}
                     onClick={handleGoButtonClick}
-                    disabled={!paperID} // Disable button if paperID is empty
+                    disabled={!paperID}
                   >
                     Go
                   </button>
                 </div>
 
-                {/* Name */}
+                <div className="mb-4">
+                  <label className="block text-gray-700">Conference:</label>
+                  <select
+                    className={`form-input mt-1 block w-full border border-gray-300 ${
+                      errors.track ? "border-red-500" : ""
+                    }`}
+                    onChange={handleConferenceChange}
+                  >
+                    <option value="">
+                      {paperDetails && paperDetails.conference_title
+                        ? paperDetails.conference_title
+                        : "Select Conference"}
+                    </option>
+                    {conferenceList.map((conferenceItem) => (
+                      <option
+                        key={conferenceItem._id}
+                        value={conferenceItem._id}
+                      >
+                        {conferenceItem.conference_title.toLowerCase() === "international conference on ai and geoscience remote sensing"
+                          ? "International Conference on AI and Geoscience Remote Sensing"
+                          : conferenceItem.conference_title}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.track && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.track}
+                    </p>
+                  )}
+                </div>
+
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Name: <span className="text-red-500">*</span>
+                    Name:<span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center">
                     <input
@@ -1055,7 +1115,6 @@ const AuthorRegistration = () => {
                       }`}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      disabled={editPaper}
                     />
                     <label className="ml-2">
                       <input
@@ -1065,7 +1124,6 @@ const AuthorRegistration = () => {
                         onChange={(e) =>
                           setIsCorrespondingAuthor(e.target.checked)
                         }
-                        disabled={editPaper}
                       />
                       <span className="ml-1">Corresponding Author</span>
                     </label>
@@ -1074,10 +1132,9 @@ const AuthorRegistration = () => {
                     <p className="text-red-500 text-xs italic">{errors.name}</p>
                   )}
                 </div>
-                {/* Affiliation */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Affiliation: <span className="text-red-500">*</span>
+                    Affiliation:<span className="text-red-500">*</span>
                   </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -1085,7 +1142,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={affiliation}
                     onChange={(e) => setAffiliation(e.target.value)}
-                    disabled={editPaper}
                   ></textarea>
                   {errors.affiliation && (
                     <p className="text-red-500 text-xs italic">
@@ -1093,10 +1149,9 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Country */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Country: <span className="text-red-500">*</span>
+                    Country:<span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -1105,7 +1160,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    disabled={editPaper}
                   />
                   {errors.country && (
                     <p className="text-red-500 text-xs italic">
@@ -1113,7 +1167,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Contact Number */}
                 <div className="mb-4">
                   <label className="block text-gray-700">Contact Number:</label>
                   <input
@@ -1123,7 +1176,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={contactNumber}
                     onChange={(e) => setContactNumber(e.target.value)}
-                    disabled={editPaper}
                   />
                   {errors.contactNumber && (
                     <p className="text-red-500 text-xs italic">
@@ -1131,10 +1183,9 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Email */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Email: <span className="text-red-500">*</span>
+                    Email:<span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -1143,7 +1194,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={editPaper}
                   />
                   {errors.email && (
                     <p className="text-red-500 text-xs italic">
@@ -1151,7 +1201,6 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Google Scholar ID */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     Google Scholar ID (Optional):
@@ -1161,10 +1210,8 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block w-full border border-gray-300"
                     value={googlescId}
                     onChange={(e) => setGooglescId(e.target.value)}
-                    disabled={editPaper}
                   />
                 </div>
-                {/* ORCID ID */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
                     ORCID ID (Optional):
@@ -1174,13 +1221,11 @@ const AuthorRegistration = () => {
                     className="form-input mt-1 block w-full border border-gray-300"
                     value={orchidId}
                     onChange={(e) => setOrchidId(e.target.value)}
-                    disabled={editPaper}
                   />
                 </div>
-                {/* Title */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Title: <span className="text-red-500">*</span>
+                    Title:<span className="text-red-500">*</span>
                   </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -1188,7 +1233,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    disabled={editPaper}
                   ></textarea>
                   {errors.title && (
                     <p className="text-red-500 text-xs italic">
@@ -1196,10 +1240,9 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Track */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Track: <span className="text-red-500">*</span>
+                    Track:<span className="text-red-500">*</span>
                   </label>
                   <select
                     className={`form-input mt-1 block w-full border border-gray-300 ${
@@ -1207,7 +1250,6 @@ const AuthorRegistration = () => {
                     }`}
                     value={selectedTrackId}
                     onChange={handleTrackChange}
-                    disabled={editPaper}
                   >
                     <option value="">
                       {paperDetails.track && paperDetails.track.track_name
@@ -1226,58 +1268,50 @@ const AuthorRegistration = () => {
                     </p>
                   )}
                 </div>
-                {/* Keywords */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Keywords: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 5 words)</span>
+                    Keywords <span className="text-red-500">* (Limited to 5 words, delimited by comma)</span>
                   </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.keywords || keywordsLimitError ? "border-red-500" : ""
+                      errors.keywords ? "border-red-500" : ""
                     }`}
                     value={keywords}
                     onChange={handleKeywordsChange}
-                    disabled={editPaper}
+                    placeholder="e.g., machine_learning,data_science,apple"
                   ></textarea>
-                  {keywordsLimitError && (
-                    <p className="text-red-500 text-xs italic">
-                      Word limit exceeded (max 5 words)
-                    </p>
-                  )}
-                  {errors.keywords && !keywordsLimitError && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    {keywordCount}/5 keywords
+                  </div>
+                  {errors.keywords && (
                     <p className="text-red-500 text-xs italic">
                       {errors.keywords}
                     </p>
                   )}
                 </div>
-                {/* Abstract */}
                 <div className="mb-4">
                   <label className="block text-gray-700">
-                    Abstract: <span className="text-red-500">*</span> <span className="text-red-500 text-xs">(Limited to 1000 words)</span>
+                    Abstract <span className="text-red-500">* (Limited to 1000 words, delimited by space)</span>
                   </label>
                   <textarea
                     className={`form-input mt-1 block w-full border border-gray-300 ${
-                      errors.abstract || abstractLimitError ? "border-red-500" : ""
+                      errors.abstract ? "border-red-500" : ""
                     }`}
                     value={abstract}
                     onChange={handleAbstractChange}
-                    disabled={editPaper}
                   ></textarea>
-                  {abstractLimitError && (
-                    <p className="text-red-500 text-xs italic">
-                      Word limit exceeded (max 1000 words)
-                    </p>
-                  )}
-                  {errors.abstract && !abstractLimitError && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    {abstractWordCount}/1000 words
+                  </div>
+                  {errors.abstract && (
                     <p className="text-red-500 text-xs italic">
                       {errors.abstract}
                     </p>
                   )}
                 </div>
-                {/* PDF File */}
                 <div className="mb-4 flex flex-col">
-                  <label className="block text-red-500">
-                    PDF File only: <span className="text-red-500">*</span>
+                  <label className="block text-gray-700">
+                    PDF File:<span className="text-red-500">*</span>
                   </label>
                   {paperDetails.pdfLink && (
                     <div className="mb-2">
@@ -1293,35 +1327,29 @@ const AuthorRegistration = () => {
                   )}
                   <input
                     type="file"
+                    accept="application/pdf"
                     className={`form-input mt-1 block w-full ${
-                      errors.pdfFile || pdfFileTypeError ? "border-red-500" : ""
+                      errors.pdfFile ? "border-red-500" : ""
                     }`}
-                    onChange={handlePdfFileChange}
-                    disabled={editPaper}
+                    onChange={handleFileChange}
                   />
-                  {pdfFileTypeError && (
-                    <p className="text-red-500 text-xs italic">
-                      Please upload a PDF file only.
-                    </p>
-                  )}
-                  {errors.pdfFile && !pdfFileTypeError && (
+                  {errors.pdfFile && (
                     <p className="text-red-500 text-xs italic">
                       {errors.pdfFile}
                     </p>
                   )}
                 </div>
-                {/* Co-Authors */}
                 <div className="mb-4">
                   <label className="block text-gray-700">Co-Authors:</label>
                   {paperDetails.co_authors
                     ? paperDetails.co_authors.map((coAuthor, index) => (
                         <div
                           key={index}
-                          className="flex space-x-4 items-center"
+                          className="flex space-x-4 items-center mb-2"
                         >
                           <input
                             type="text"
-                            className="form-input mt-1 block w-1/ 2 border border-gray-300"
+                            className="form-input mt-1 block w-1/2 border border-gray-300"
                             placeholder="Name"
                             value={coAuthor.name}
                             onChange={(e) =>
@@ -1331,7 +1359,6 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <input
                             type="email"
@@ -1345,7 +1372,6 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -1359,7 +1385,6 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -1373,7 +1398,6 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <input
                             type="text"
@@ -1387,13 +1411,11 @@ const AuthorRegistration = () => {
                                 e.target.value
                               )
                             }
-                            disabled={editPaper}
                           />
                           <button
                             type="button"
-                            className="border rounded border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                            className="bg-red-500 text-white px-5 py-1 rounded"
                             onClick={() => handleDeleteCoAuthor(index)}
-                            disabled={editPaper}
                           >
                             Remove
                           </button>
@@ -1401,10 +1423,10 @@ const AuthorRegistration = () => {
                       ))
                     : CoAuthors.map((coAuthor, index) => (
                         <div key={index} className="mb-2">
-                          <div className="flex items-center">
+                          <div className="flex items-center space-x-3">
                             <input
                               type="text"
-                              className="form-input mt-1 block w-full mr-3"
+                              className="form-input mt-1 block w-full"
                               placeholder="Name"
                               value={coAuthor.name}
                               onChange={(e) =>
@@ -1414,11 +1436,10 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <input
                               type="text"
-                              className="form-input mt-1 block w-full mr-3"
+                              className="form-input mt-1 block w-full"
                               placeholder="Email"
                               value={coAuthor.email}
                               onChange={(e) =>
@@ -1428,11 +1449,10 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <input
                               type="text"
-                              className="form-input mt-1 block w-full mr-3"
+                              className="form-input mt-1 block w-full"
                               placeholder="Mobile"
                               value={coAuthor.mobile}
                               onChange={(e) =>
@@ -1442,11 +1462,10 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <input
                               type="text"
-                              className="form-input mt-1 block w-full mr-3"
+                              className="form-input mt-1 block w-full"
                               placeholder="Affiliation"
                               value={coAuthor.affiliation}
                               onChange={(e) =>
@@ -1456,11 +1475,10 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <input
                               type="text"
-                              className="form-input mt-1 block w-1/2 mr-3"
+                              className="form-input mt-1 block w-1/2"
                               placeholder="Country"
                               value={coAuthor.country}
                               onChange={(e) =>
@@ -1470,7 +1488,6 @@ const AuthorRegistration = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={editPaper}
                             />
                             <label className="mr-2">
                               <input
@@ -1484,15 +1501,13 @@ const AuthorRegistration = () => {
                                     e.target.checked
                                   )
                                 }
-                                disabled={editPaper}
                               />
                               <span className="ml-1">Corresponding Author</span>
                             </label>
                             <button
                               type="button"
-                              className="border rounded border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                              className="border rounded border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                               onClick={() => handleDeleteCoAuthor(index)}
-                              disabled={editPaper}
                             >
                               Delete
                             </button>
@@ -1502,36 +1517,20 @@ const AuthorRegistration = () => {
 
                   <button
                     type="button"
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px- dobb7 py-2 text-sm font-medium  bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
+                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     onClick={handleAddCoAuthor}
-                    disabled={editPaper}
                   >
                     Add Co-Author
                   </button>
                 </div>
 
-                <div className="flex justify-center md:space-x-6 md:gap-4">
-                  {/* Submit or Edit Button */}
+                <div className="flex justify-center space-x-6 gap-4">
                   <button
                     type="submit"
                     className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
                     disabled={loading}
                   >
-                    {loading ? "Submit" : "Submit"}
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-                    onClick={handleSave}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-block rounded border border-indigo-600 bg-indigo-600 px-7 py-2 text-sm font-medium bg-slate-300 text-black hover:bg-slate-500 hover:text-white focus:outline-none focus:ring active:text-indigo-500"
-                    onClick={handleEditToggle}
-                  >
-                    {editPaper ? "Edit" : "Cancel Edit"}
+                    {loading ? "Submitting..." : "Submit"}
                   </button>
                   {paperID && (
                     <button
